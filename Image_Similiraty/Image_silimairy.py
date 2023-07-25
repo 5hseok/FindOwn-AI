@@ -27,7 +27,9 @@ def preprocess(img_path, input_shape):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     img = tf.convert_to_tensor(img)
+    print(img)
     img = tf.image.convert_image_dtype(img, tf.float32)
+    print(img)
     img = tf.image.resize(img, input_shape[:2])
     img = preprocess_input(img)
     return img
@@ -104,7 +106,7 @@ def save_results_to_csv(user_file, image_filenames, similarities):
 def main():
     global model
     
-    root_dir = "C:\\Users\\DGU_ICE\\ImageCopy\\ImageSeparation\\Image"
+    root_dir = "이미지 더미들 파일 주소"
     #이미지 더미들 넣는 파일, User가 입력한 이미지와 여기 dir에 있는 이미지들을 비교해서 유사도를 검색한다.
     
     #모델 구현
