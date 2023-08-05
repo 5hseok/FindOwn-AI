@@ -1,9 +1,10 @@
 from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 from torchvision.models.feature_extraction import create_feature_extractor
 
-weights = EfficientNet_B0_Weights.DEFAULT
+# weights = EfficientNet_B0_Weights.DEFAULT
 model = efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
-model = create_feature_extractor(model, return_nodes={'avgpool': 'avgpool'})
+model = create_feature_extractor(model, return_nodes={'features': 'features'})
+# model = create_feature_extractor(model,return_nodes={'avgpool' : 'avgpool'})
 model.eval()
 
 import requests
@@ -33,7 +34,8 @@ def cos_sim(A, B):
 def predict(image_url):
     resized_image = image_resize(image_url)
     predicted_result = model(resized_image)
-    image_feature = torch.flatten(predicted_result['avgpool'])
+    image_feature = torch.flatten(predicted_result['features'])
+    # image_feature = torch.flatten(predicted_result['avgpool'])
     return image_feature.detach().numpy()
 
 # 이미지 URL 쌍 리스트를 정의합니다
