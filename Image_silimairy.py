@@ -17,6 +17,7 @@ from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import matplotlib.pyplot as plt
 
+
 #이미지 파일 전처리
 def preprocess(img_path, input_shape):
     if not os.path.exists(img_path) or not os.path.isfile(img_path):
