@@ -38,15 +38,17 @@ def predict(image_url):
     # image_feature = torch.flatten(predicted_result['avgpool'])
     return image_feature.detach().numpy()
 
-# 이미지 URL 쌍 리스트를 정의합니다
+# 이미지 URL 쌍 리스트를 정의합니다 - 기존 버전입니다.
 image_pairs = [
     ("https://previews.123rf.com/images/rclassenlayouts/rclassenlayouts1209/rclassenlayouts120900196/15362188-3d-%EC%BB%A4%ED%94%BC-%EC%B9%B4%ED%8E%98-%EC%BD%A9-%EA%B8%B0%EC%97%85%EC%9D%98-%EB%94%94%EC%9E%90%EC%9D%B8-%EC%95%84%EC%9D%B4%EC%BD%98-%EB%A1%9C%EA%B3%A0-%EC%83%81%ED%91%9C.jpg","https://www.shutterstock.com/image-vector/coffee-cup-icon-600w-223212751.jpg"),
     ("https://drive.google.com/uc?export=download&id=15SFZlK07iWIDUn1NRU7njl_7pU-AlLY1","https://drive.google.com/uc?export=download&id=119biFlAhymgClAAxGTzEQyuhgVtWiXNn"),
     ("https://previews.123rf.com/images/rclassenlayouts/rclassenlayouts1209/rclassenlayouts120900196/15362188-3d-%EC%BB%A4%ED%94%BC-%EC%B9%B4%ED%8E%98-%EC%BD%A9-%EA%B8%B0%EC%97%85%EC%9D%98-%EB%94%94%EC%9E%90%EC%9D%B8-%EC%95%84%EC%9D%B4%EC%BD%98-%EB%A1%9C%EA%B3%A0-%EC%83%81%ED%91%9C.jpg","https://previews.123rf.com/images/rclassenlayouts/rclassenlayouts1209/rclassenlayouts120900196/15362188-3d-%EC%BB%A4%ED%94%BC-%EC%B9%B4%ED%8E%98-%EC%BD%A9-%EA%B8%B0%EC%97%85%EC%9D%98-%EB%94%94%EC%9E%90%EC%9D%B8-%EC%95%84%EC%9D%B4%EC%BD%98-%EB%A1%9C%EA%B3%A0-%EC%83%81%ED%91%9C.jpg"),
-
     #(sourece_url, target_url)
     # 다른 이미지 URL 쌍을 여기에 추가하세요
 ]
+
+#새로 만들어진 버전입니다. Image 파일에서 이미지 쌍을 불러옵니다.
+image_pairs_local =[]
 
 # 각 이미지 쌍의 코사인 유사도를 저장할 리스트를 초기화합니다
 similarities = []
