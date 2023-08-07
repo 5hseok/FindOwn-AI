@@ -11,8 +11,22 @@ import requests
 import torchvision.transforms as T
 from PIL import Image
 
-def image_resize(image_url):
+def image_resize(image_url):                #이미지 url로 받아올 때 사용
     image = Image.open(requests.get(image_url, stream=True).raw)
+    rgb_image = image.convert('RGB')
+    preprocess = T.Compose([
+        T.Resize(256, interpolation=T.InterpolationMode.BICUBIC),
+        T.CenterCrop(224),
+        T.ToTensor()]
+    )
+    return preprocess(rgb_image).unsqueeze(0)
+
+def image_resize_local(image_path):     #이미지를 로컬에서 받아올 때 사용
+    if not os.path.exists(image_path):
+        print(f"Image file not found: {image_path}")
+        return None
+
+    image = Image.open(image_path)
     rgb_image = image.convert('RGB')
     preprocess = T.Compose([
         T.Resize(256, interpolation=T.InterpolationMode.BICUBIC),
@@ -30,9 +44,12 @@ import torch
 def cos_sim(A, B):
     return dot(A, B) / (norm(A) * norm(B))
 
-
-def predict(image_url):
-    resized_image = image_resize(image_url)
+#def predict(image_url):
+def predict(image_path):
+    # resized_image = image_resize(image_url)
+    resized_image = image_resize_local(image_path)
+    if resized_image is None:
+        return None
     predicted_result = model(resized_image)
     image_feature = torch.flatten(predicted_result['features'])
     # image_feature = torch.flatten(predicted_result['avgpool'])
@@ -47,8 +64,33 @@ image_pairs = [
     # 다른 이미지 URL 쌍을 여기에 추가하세요
 ]
 
+root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\Image"
+#한 쌍의 이미지 파일을 넣는 이미지 파일 dir 주소. 여기서 소송 및 분쟁에 관련된 이미지 쌍을 가져온다.
+#자신의 로컬에 있는 Image 파일 주소로 설정할 것.
+
+import os
+import re
+from collections import defaultdict
+
+image_pairs_local= []
 #새로 만들어진 버전입니다. Image 파일에서 이미지 쌍을 불러옵니다.
-image_pairs_local =[]
+image_file_pattern = re.compile(r'(.*)_([\d]+)\.(?:png|jpg)$')
+
+# 이미지를 저장할 기본 딕셔너리 생성
+image_dict = defaultdict(list)
+
+for(dirpath, dirnames, filenames) in os.walk(root_dir):
+    for filename in filenames:
+        match=image_file_pattern.match(filename)
+        if match:
+            image_dict[match.group(1)].append(os.path.join(dirpath, filename))
+            
+for key in image_dict:
+    if len(image_dict[key])>=2:
+        images=sorted(image_dict[key])
+        for pair in zip(images[:-1],images[1:]):
+            image_pairs_local.append(pair)
+
 
 # 각 이미지 쌍의 코사인 유사도를 저장할 리스트를 초기화합니다
 similarities = []
@@ -57,7 +99,9 @@ import urllib.request
 from matplotlib import pyplot as plt
 import numpy as np
 
-for pair in image_pairs:
+# for pair in image_pairs:      #url 버전 pair
+for pair in image_pairs_local:  #local image 버전 pair
+    print(len(image_pairs_local))
     source_embedding = predict(pair[0])
     target_embedding = predict(pair[1])
     similarity = cos_sim(source_embedding, target_embedding)
@@ -66,22 +110,18 @@ for pair in image_pairs:
     plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
 
     # 첫 번째 이미지와 유사도 값을 출력합니다
-    with urllib.request.urlopen(pair[0]) as url:
-        image_data = url.read()
-    image_array = np.asarray(bytearray(image_data), dtype=np.uint8)
-    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+    image_path = pair[0]
+    image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
+
     plt.subplot(1, 2, 1) # 1행 2열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
     plt.title("Image 1")
     plt.imshow(image)
     plt.axis('off')
 
     # 두 번째 이미지와 유사도 값을 출력합니다
-    with urllib.request.urlopen(pair[1]) as url:
-        image_data = url.read()
-    image_array = np.asarray(bytearray(image_data), dtype=np.uint8)
-    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+    image_path = pair[1]
+    image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
     plt.subplot(1, 2, 2) # 1행 2열의 subplot에서 두 번째 위치에 이미지를 넣습니다
@@ -103,7 +143,7 @@ with open('image_pairs_similarity.csv', mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Source Image', 'Target Image', 'Similarity'])
 
-    for pair in image_pairs:
+    for pair in image_pairs_local:
         source_embedding = predict(pair[0])
         target_embedding = predict(pair[1])
         similarity = cos_sim(source_embedding, target_embedding)
@@ -111,5 +151,3 @@ with open('image_pairs_similarity.csv', mode='w', newline='') as csv_file:
 
         # 유사도 값을 CSV 파일에 기록한다.
         csv_writer.writerow([pair[0], pair[1], similarity])
-
-
