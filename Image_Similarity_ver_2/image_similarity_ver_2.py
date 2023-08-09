@@ -2,6 +2,13 @@
 # from torchvision.models.feature_extraction import create_feature_extractor
 from efficientnet_pytorch import EfficientNet
 
+    ####################################################
+    #   이 py 파일은 침해도 기준을 정하기 위한 모델로    #
+    #   유사도 검색을 진행하지만, 한 쌍의 이미지들에     #
+    #   대해서만 유사도 검색을 진행하여 평균적인 유사도  #
+    #   결과를 도출한다.                               #
+    ###################################################
+
 def create_feature_extractor(model, return_nodes=None):
     if return_nodes is None:
         return_nodes = {'avgpool': 'avgpool'}
