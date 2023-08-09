@@ -107,7 +107,8 @@ def save_results_to_csv(user_file, image_filenames, similarities):
 def main():
     global model
     
-    root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\Image_Similiraty\\Image"
+    root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\Image"
+
     #이미지 더미들 넣는 파일, User가 입력한 이미지와 여기 dir에 있는 이미지들을 비교해서 유사도를 검색한다.
     
     #모델 구현
@@ -183,6 +184,7 @@ if __name__ == '__main__':
     for i, idx in enumerate(idxs[0]):
         all_img.append(find_file_name(idx))
         all_data.append(dists[0][i])
+        print(all_data[-1])
         if dists[0][i] >= 0.996 and idx != -1:   
             sim_files.append(find_file_name(idx))
             sim_data.append(dists[0][i])

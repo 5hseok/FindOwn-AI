@@ -1,11 +1,21 @@
-from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
-from torchvision.models.feature_extraction import create_feature_extractor
+# from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+# from torchvision.models.feature_extraction import create_feature_extractor
+from efficientnet_pytorch import EfficientNet
 
-# weights = EfficientNet_B0_Weights.DEFAULT
-model = efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
-model = create_feature_extractor(model, return_nodes={'features': 'features'})
-# model = create_feature_extractor(model,return_nodes={'avgpool' : 'avgpool'})
-model.eval()
+def create_feature_extractor(model, return_nodes=None):
+    if return_nodes is None:
+        return_nodes = {'avgpool': 'avgpool'}
+
+    return_nodes_output = {}
+    for name, module in model.named_modules():
+        if name in return_nodes:
+            return_nodes_output[name] = module
+
+    return return_nodes_output
+
+model = EfficientNet.from_pretrained('efficientnet-b7')
+model_features = create_feature_extractor(model,return_nodes={'_conv_head':'_conv_head'})
+model.eval()    
 
 import requests
 import torchvision.transforms as T
@@ -21,20 +31,24 @@ def image_resize(image_url):                #이미지 url로 받아올 때 사�
     )
     return preprocess(rgb_image).unsqueeze(0)
 
-def image_resize_local(image_path):     #이미지를 로컬에서 받아올 때 사용
-    if not os.path.exists(image_path):
-        print(f"Image file not found: {image_path}")
+
+from torchvision.transforms import Compose, Resize, ToTensor, Normalize
+
+def image_resize_local(image_path):
+    try:
+        image = Image.open(image_path).convert('RGB')
+    except Exception as e:
+        print(f"Error: Unable to open image. {e}")
         return None
 
-    image = Image.open(image_path)
-    rgb_image = image.convert('RGB')
-    preprocess = T.Compose([
-        T.Resize(256, interpolation=T.InterpolationMode.BICUBIC),
-        T.CenterCrop(224),
-        T.ToTensor()]
-    )
-    return preprocess(rgb_image).unsqueeze(0)
+    # 이미지 전처리: 크기 조정, 텐서 변환, 정규화
+    preprocess = Compose([
+        Resize((224, 224)),
+        ToTensor(),
+        Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    ])
 
+    return preprocess(image)
 
 from numpy import dot
 from numpy.linalg import norm
@@ -44,16 +58,18 @@ import torch
 def cos_sim(A, B):
     return dot(A, B) / (norm(A) * norm(B))
 
-#def predict(image_url):
+
 def predict(image_path):
-    # resized_image = image_resize(image_url)
     resized_image = image_resize_local(image_path)
     if resized_image is None:
         return None
-    predicted_result = model(resized_image)
-    image_feature = torch.flatten(predicted_result['features'])
-    # image_feature = torch.flatten(predicted_result['avgpool'])
+    model.eval()
+    with torch.no_grad():
+        image_transformed=resized_image.unsqueeze(0)
+        predicted_result=model(image_transformed)
+        image_feature=torch.flatten(predicted_result)
     return image_feature.detach().numpy()
+    
 
 # 이미지 URL 쌍 리스트를 정의합니다 - 기존 버전입니다.
 image_pairs = [
@@ -106,31 +122,32 @@ for pair in image_pairs_local:  #local image 버전 pair
     target_embedding = predict(pair[1])
     similarity = cos_sim(source_embedding, target_embedding)
     similarities.append(similarity)
+    print(similarity)
 
-    plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
+    # plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
 
-    # 첫 번째 이미지와 유사도 값을 출력합니다
-    image_path = pair[0]
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # # 첫 번째 이미지와 유사도 값을 출력합니다
+    # image_path = pair[0]
+    # image = cv2.imread(image_path)
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    plt.subplot(1, 2, 1) # 1행 2열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
-    plt.title("Image 1")
-    plt.imshow(image)
-    plt.axis('off')
+    # plt.subplot(1, 2, 1) # 1행 2열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
+    # plt.title("Image 1")
+    # plt.imshow(image)
+    # plt.axis('off')
 
-    # 두 번째 이미지와 유사도 값을 출력합니다
-    image_path = pair[1]
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # # 두 번째 이미지와 유사도 값을 출력합니다
+    # image_path = pair[1]
+    # image = cv2.imread(image_path)
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
-    plt.subplot(1, 2, 2) # 1행 2열의 subplot에서 두 번째 위치에 이미지를 넣습니다
-    plt.title(f"Image 2 (Similarity: {similarity * 100:.2f}%)")
-    plt.imshow(image)
-    plt.axis('off')
+    # plt.subplot(1, 2, 2) # 1행 2열의 subplot에서 두 번째 위치에 이미지를 넣습니다
+    # plt.title(f"Image 2 (Similarity: {similarity * 100:.2f}%)")
+    # plt.imshow(image)
+    # plt.axis('off')
 
-    # 이미지와 함께 유사도 값을 출력합니다
-    plt.show()
+    # # 이미지와 함께 유사도 값을 출력합니다
+    # plt.show()
 
 
 # 유사도의 평균을 계산합니다
