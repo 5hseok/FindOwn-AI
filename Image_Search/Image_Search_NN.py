@@ -1,5 +1,5 @@
 from efficientnet_pytorch import EfficientNet
-
+#전체 이미지 DB에 있는 이미지들에서 유사도를 전부 측정한다.
 def create_feature_extractor(model, return_nodes=None):
     if return_nodes is None:
         return_nodes = {'avgpool': 'avgpool'}

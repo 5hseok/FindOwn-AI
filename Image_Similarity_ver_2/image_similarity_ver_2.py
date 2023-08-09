@@ -20,8 +20,8 @@ def create_feature_extractor(model, return_nodes=None):
 
     return return_nodes_output
 
-model = EfficientNet.from_pretrained('efficientnet-b7')
-model_features = create_feature_extractor(model,return_nodes={'_conv_head':'_conv_head'})
+model = EfficientNet.from_pretrained('efficientnet-b0')
+model_features = create_feature_extractor(model)
 model.eval()    
 
 import requests
@@ -95,24 +95,25 @@ import os
 import re
 from collections import defaultdict
 
-image_pairs_local= []
-#새로 만들어진 버전입니다. Image 파일에서 이미지 쌍을 불러옵니다.
-image_file_pattern = re.compile(r'(.*)_([\d]+)\.(?:png|jpg)$')
+image_pairs_local = []
+image_file_pattern = re.compile(r'^page(\d+)_image(\d+)\.(?:png|jpg)$')
+image_dict = defaultdict(lambda: {})
 
-# 이미지를 저장할 기본 딕셔너리 생성
-image_dict = defaultdict(list)
-
-for(dirpath, dirnames, filenames) in os.walk(root_dir):
+for (dirpath, dirnames, filenames) in os.walk(root_dir):
     for filename in filenames:
-        match=image_file_pattern.match(filename)
+        match = image_file_pattern.match(filename)
         if match:
-            image_dict[match.group(1)].append(os.path.join(dirpath, filename))
-            
-for key in image_dict:
-    if len(image_dict[key])>=2:
-        images=sorted(image_dict[key])
-        for pair in zip(images[:-1],images[1:]):
-            image_pairs_local.append(pair)
+            page_num = match.group(1)
+            image_num = int(match.group(2))
+            if image_num in [1, 2]:
+                image_dict[page_num][image_num] = os.path.join(dirpath, filename)
+                
+for page_num, images in image_dict.items():
+    if 1 in images and 2 in images:
+        pair = (images[1], images[2])
+        image_pairs_local.append(pair)
+
+
 
 
 # 각 이미지 쌍의 코사인 유사도를 저장할 리스트를 초기화합니다
@@ -124,37 +125,37 @@ import numpy as np
 
 # for pair in image_pairs:      #url 버전 pair
 for pair in image_pairs_local:  #local image 버전 pair
-    print(len(image_pairs_local))
     source_embedding = predict(pair[0])
     target_embedding = predict(pair[1])
     similarity = cos_sim(source_embedding, target_embedding)
     similarities.append(similarity)
     print(similarity)
 
-    # plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
+    if similarity > 0.9 :
+        plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
 
-    # # 첫 번째 이미지와 유사도 값을 출력합니다
-    # image_path = pair[0]
-    # image = cv2.imread(image_path)
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # 첫 번째 이미지와 유사도 값을 출력합니다
+        image_path = pair[0]
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # plt.subplot(1, 2, 1) # 1행 2열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
-    # plt.title("Image 1")
-    # plt.imshow(image)
-    # plt.axis('off')
+        plt.subplot(1, 2, 1) # 1행 2열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
+        plt.title("Image 1")
+        plt.imshow(image)
+        plt.axis('off')
 
-    # # 두 번째 이미지와 유사도 값을 출력합니다
-    # image_path = pair[1]
-    # image = cv2.imread(image_path)
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    # plt.subplot(1, 2, 2) # 1행 2열의 subplot에서 두 번째 위치에 이미지를 넣습니다
-    # plt.title(f"Image 2 (Similarity: {similarity * 100:.2f}%)")
-    # plt.imshow(image)
-    # plt.axis('off')
+        # 두 번째 이미지와 유사도 값을 출력합니다
+        image_path = pair[1]
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        plt.subplot(1, 2, 2) # 1행 2열의 subplot에서 두 번째 위치에 이미지를 넣습니다
+        plt.title(f"Image 2 (Similarity: {similarity * 100:.2f}%)")
+        plt.imshow(image)
+        plt.axis('off')
 
-    # # 이미지와 함께 유사도 값을 출력합니다
-    # plt.show()
+        # 이미지와 함께 유사도 값을 출력합니다
+        plt.show()
 
 
 # 유사도의 평균을 계산합니다
