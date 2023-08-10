@@ -8,6 +8,16 @@ from efficientnet_pytorch import EfficientNet
     #   대해서만 유사도 검색을 진행하여 평균적인 유사도  #
     #   결과를 도출한다.                               #
     ###################################################
+    
+    
+    
+    # Trademark : 집단 1의 평균은 약 0.2420276, 집단 2의 평균은 약 0.4325535, 그리고 집단 3의 평균은 약 0.7199525
+    #        max: 집단 1에서는 0.36137512, 집단 2에서는 0.6195105, 그리고 집단 3에서는 0.99921304입니다.
+    #     center: 집단 1: 0.256058485, 집단 2: 0.464983895, 집단 3: 0.7301271
+    
+    
+    # Design : 집단 1의 평균은 약 0.3077481, 집단 2의 평균은 약 0.4971058, 그리고 집단 3의 평균은 약 0.7627674
+    #          집단 1에서는 0.3872422, 집단 2에서는 0.673093, 그리고 집단 3에서는 0.99921304
 
 def create_feature_extractor(model, return_nodes=None):
     if return_nodes is None:
@@ -130,8 +140,8 @@ for pair in image_pairs_local:  #local image 버전 pair
     similarity = cos_sim(source_embedding, target_embedding)
     similarities.append(similarity)
     print(similarity)
-
-    if similarity > 0.9 :
+        
+    if similarity < 0.2 :
         plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
 
         # 첫 번째 이미지와 유사도 값을 출력합니다
@@ -156,15 +166,25 @@ for pair in image_pairs_local:  #local image 버전 pair
 
         # 이미지와 함께 유사도 값을 출력합니다
         plt.show()
-
-
+group3=0
+group1=0
+group2=0
+for similarity in similarities:
+    print(similarity)
+    if similarity > 0.7:
+        group3+=1
+    elif similarity < 0.35:
+        group1+=1
+    else:
+        group2+=1
+print("Group 1 :",group1,"Group 2 :",group2,"Group 3 :",group3)
 # 유사도의 평균을 계산합니다
 average_similarity = sum(similarities) / len(similarities)
 print("Average similarity: {:.4f}%".format(round(average_similarity * 100,4)))
 
 import csv
 # CSV 파일을 쓰기 모드로 연다.
-with open('image_pairs_similarity.csv', mode='w', newline='') as csv_file:
+with open('image_pairs_similarity_Trademark.csv', mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Source Image', 'Target Image', 'Similarity'])
 
