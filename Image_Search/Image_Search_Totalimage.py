@@ -141,7 +141,7 @@ print("Average similarity: {:.4f}%".format(round(average_similarity * 100,4)))
 
 import csv
 # CSV 파일을 쓰기 모드로 연다.
-with open('image_similarity_NN.csv', mode='w', newline='') as csv_file:
+with open('image_similarity_Totalimage.csv', mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(['Image', 'Target Image', 'Similarity'])
 
