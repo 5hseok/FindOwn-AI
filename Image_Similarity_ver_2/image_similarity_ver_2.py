@@ -141,7 +141,7 @@ for pair in image_pairs_local:  #local image 버전 pair
     similarities.append(similarity)
     print(similarity)
         
-    if similarity < 0.2 :
+    if similarity > 0.8 :
         plt.figure(figsize=(10, 5)) # 적절한 크기를 지정할 수 있습니다.
 
         # 첫 번째 이미지와 유사도 값을 출력합니다
