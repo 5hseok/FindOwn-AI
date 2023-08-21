@@ -1,4 +1,5 @@
 from efficientnet_pytorch import EfficientNet
+
 #전체 이미지 DB에 있는 이미지들에서 유사도를 전부 측정한다.
 def create_feature_extractor(model, return_nodes=None):
     if return_nodes is None:
@@ -52,6 +53,11 @@ from numpy import dot
 from numpy.linalg import norm
 import torch
 
+def is_image_file(filename):
+    # 파일 확장자 검사
+    VALID_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.bmp', '.gif')
+    _, ext = os.path.splitext(filename)
+    return ext.lower() in VALID_EXTENSIONS
 
 def cos_sim(A, B):
     return dot(A, B) / (norm(A) * norm(B))
@@ -77,13 +83,14 @@ import re
 from collections import defaultdict
 
 # 타겟 이미지 경로
-target_image_path = "C:\\Users\\sam\\Desktop\\user\\Pictures\\Pattern_Image\\1.jpg"
+target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\uefa-champions-league-eps-vector-logo-400x400.png"
 
 # 디렉토리에서 이미지 파일들 찾기
 image_files = []
 for (dirpath, dirnames, filenames) in os.walk(root_dir):
     for filename in filenames:
-        image_files.append(os.path.join(dirpath, filename))
+        if is_image_file(filename):
+            image_files.append(os.path.join(dirpath, filename))
 
 # 각 이미지와 타겟 이미지 간에 코사인 유사도 저장할 리스트 초기화
 similarities = []
@@ -92,77 +99,70 @@ import cv2
 import urllib.request
 from matplotlib import pyplot as plt
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor
+
 
 # 타겟 이미지 특징 추출
+def process_image(image_path):
+    source_embedding = predict(image_path)
+    if source_embedding is None or target_embedding is None:
+        return image_path, None
+    similarity = cos_sim(source_embedding,target_embedding)
+    return image_path, similarity
+
+import time
+start_time=time.time()
 target_embedding = predict(target_image_path)
 
-results = []
-
 # 각 이미지와 타겟 이미지의 유사도 계산
-for image_path in image_files:
-    source_embedding = predict(image_path)
-    if source_embedding is None:
-        print(f"Skipping {image_path} due to prediction error.")
-        continue
-    if target_embedding is None:
-        print(f"Skipping {image_path} due to prediction error.")
-        continue
-    similarity = cos_sim(source_embedding, target_embedding)
-    similarities.append(similarity)
-    
-    results.append((image_path,similarity))
-    
-top_results = sorted(results, key=lambda x: x[1],reverse=True)[:10]
+with ThreadPoolExecutor() as executor:
+    results = list(executor.map(process_image, image_files))
 
+# 유효한 결과만 저장하고 출력합니다.
+top_results = []
+for image_path, similarity in results:
+    if similarity is not None:
+        top_results.append((image_path, similarity))
+    
+top_results=sorted(top_results, key=lambda x: x[1],reverse=True)[:10]
+elapsed_time = time.time() - start_time
+print(f"병렬 처리 시간: {elapsed_time}초")
 for image_path, similarity in top_results:
     print("Similarity between", image_path, "and target image:",similarity)
 
 
-# 유사도의 평균을 계산합니다
-average_similarity = sum(similarities) / len(similarities)
-print("Average similarity: {:.4f}%".format(round(average_similarity * 100,4)))
+# # 유사도의 평균을 계산합니다
+# average_similarity = sum(similarities) / len(similarities)
+# print("Average similarity: {:.4f}%".format(round(average_similarity * 100,4)))
 
-# import csv
-# # CSV 파일을 쓰기 모드로 연다.
-# with open('image_similarity_Top10image.csv', mode='w', newline='') as csv_file:
-#     csv_writer = csv.writer(csv_file)
-#     csv_writer.writerow(['Image', 'Target Image', 'Similarity'])
+import csv
+# CSV 파일을 쓰기 모드로 연다.
+with open('image_similarity_Top10image.csv', mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Image', 'Target Image', 'Similarity'])
 
-#     for image_path, similarity in top_results:
-#         # 유사도 값을 CSV 파일에 기록한다.
-#         csv_writer.writerow([image_path, target_image_path, similarity * 100])
-import pickle
+    for image_path, similarity in top_results:
+        # 유사도 값을 CSV 파일에 기록한다.
+        csv_writer.writerow([image_path, target_image_path, similarity * 100])
 
-# 피클 파일로 저장
-with open('image_similarity_Top10image.pkl', 'wb') as pickle_file:
-    pickle.dump(top_results, pickle_file)
+for image_path, similarity in top_results:
+# 이미지와 유사도 출력
+    plt.figure(figsize=(10, 5)) # 적절한 크기를 지정
+
+    # 첫 번째 이미지와 유사도 값 출력
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    plt.subplot(1, 2, 1) # 1행 1열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
+    plt.title(f"Image 1 Similarity: {similarity * 100:.2f}%")
+    plt.imshow(image)
+    plt.axis('off')
     
-# 피클 파일 불러오기
-with open('image_similarity_Top10image.pkl', 'rb') as pickle_file:
-    loaded_results = pickle.load(pickle_file)
-
-    for image_path, similarity in loaded_results:
-    # 이미지와 유사도 출력
-        plt.figure(figsize=(10, 5)) # 적절한 크기를 지정
-
-        # 첫 번째 이미지와 유사도 값 출력
-        image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        plt.subplot(1, 2, 1) # 1행 1열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
-        plt.title(f"Image 1 Similarity: {similarity * 100:.2f}%")
-        plt.imshow(image)
-        plt.axis('off')
-        
-        image=cv2.imread(target_image_path)
-        image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-        plt.subplot(1,2,2)
-        plt.title("Target Image")
-        plt.imshow(image)
-        plt.axis('off')
-        
-        plt.show()
-        
-# # 불러온 결과 출력
-# for image_path, similarity in loaded_results:
-#     print("Similarity between", image_path, "and target image:", similarity)
+    image=cv2.imread(target_image_path)
+    image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+    plt.subplot(1,2,2)
+    plt.title("Target Image")
+    plt.imshow(image)
+    plt.axis('off')
+    
+    plt.show()
