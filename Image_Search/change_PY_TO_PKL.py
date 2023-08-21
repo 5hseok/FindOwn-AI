@@ -1,3 +1,10 @@
+# py 파일과 데이터셋을 PKL 파일로 바꾸기 위한 코드입니다. 
+# code = """  ~~~ """ 부분에 py파일의 코드를 넣으시면 됩니다.
+# dataset_url = """~~~ """ 부분에 데이터셋을 넣으시면 됩니다. 이미지들의 url을 모은 리스트로 변경 예정. 현재는 로컬 이미지 파일 주소
+
+import pickle
+
+code = """
 from efficientnet_pytorch import EfficientNet
 
 #전체 이미지 DB에 있는 이미지들에서 유사도를 전부 측정한다.
@@ -166,3 +173,25 @@ for image_path, similarity in top_results:
     plt.axis('off')
     
     plt.show()
+
+"""
+
+# 이 예제에서는 dataset을 리스트 형태로 가정합니다.
+dataset_url = []
+dataset_local = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
+
+
+data_to_pickle = {
+    'python_code' : code,
+    'dataset' : dataset_url
+}
+
+with open('FindOwn.pkl','wb') as file:
+    pickle.dump(data_to_pickle,file)
+
+# # 필요할 때 피클 파일에서 코드와 dataset을 불러옵니다.
+# with open('your_pickle_file.pkl', 'rb') as file:
+#     loaded_data = pickle.load(file)
+
+# loaded_code = loaded_data['python_code']
+# loaded_dataset = loaded_data['dataset']
