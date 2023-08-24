@@ -197,10 +197,8 @@ def get_class_names():
 class_id_to_name = get_class_names()
 
 
-model_url = "https://tfhub.dev/google/faster_rcnn/openimages_v4/inception_resnet_v2/1"
-model = hub.load(model_url)
-tf.saved_model.save(model, "saved_resnetmodel_dir")
-
+model=tf.saved_model.load("saved_resnetmodel_dir\\")
+print(model.signatures)
 def detect_objects(image_path, objects_to_detect=None):
 
     # Load the image
@@ -209,7 +207,7 @@ def detect_objects(image_path, objects_to_detect=None):
     byte_image = tf.expand_dims(byte_image, 0)
 
     # Object detection
-    detection_output = model.signatures['serving_default'](byte_image)
+    detection_output = model(input_tensor = tf.constant(byte_image))
     num_detections = int(detection_output["num_detections"])
     object_class_ids = detection_output["detection_classes"][0].numpy().astype(int)
     object_boxes = detection_output["detection_boxes"][0].numpy()
