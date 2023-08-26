@@ -176,6 +176,9 @@ for image_path, similarity in top_results:
 
 """
 
+import os
+import shutil
+
 # 이 예제에서는 dataset을 리스트 형태로 가정합니다.
 dataset_url = []
 dataset_local = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
@@ -184,6 +187,31 @@ dataset_local = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 data_to_pickle = {
     'python_code' : code,
     'dataset' : dataset_url
+}
+
+#######################dataset을 구성하는 이미지가 url이 아닌 로컬 주소에서 가져올 경우########################
+
+dataset_in = []
+# 이미지 파일의 확장자 목록
+image_extensions = ['.jpg', '.jpeg', '.png']
+
+# dataset_local 경로에서 이미지 파일을 찾아서 dataset에 추가
+for root, dirs, files in os.walk(dataset_local):
+    for file in files:
+        _, ext = os.path.splitext(file)
+        if ext.lower() in image_extensions:
+            image_path = os.path.join(root, file)
+            dataset_in.append(image_path)
+
+# 데이터셋에 이미지가 없는 경우 예외 처리
+if len(dataset_in) == 0:
+    print("No images found in the dataset!")
+    
+#######################dataset을 구성하는 이미지가 url이 아닌 로컬 주소에서 가져올 경우########################
+
+data_to_pickle = {
+    'python_code' : code,
+    'dataset' : dataset_in
 }
 
 with open('FindOwn.pkl','wb') as file:
