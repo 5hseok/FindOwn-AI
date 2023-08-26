@@ -214,7 +214,7 @@ data_to_pickle = {
     'dataset' : dataset_in
 }
 
-with open('FindOwn.pkl','wb') as file:
+with open('FindOwn_AI.pkl','wb') as file:
     pickle.dump(data_to_pickle,file)
 
 # # 필요할 때 피클 파일에서 코드와 dataset을 불러옵니다.
