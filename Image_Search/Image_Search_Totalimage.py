@@ -175,77 +175,77 @@ for i, (image_path, similarity) in enumerate(top_results):
 plt.show()
 
 ################## 타겟 이미지와 가장 유사한 10개의 이미지들로 객체 인식 돌리기 ####3###################
-import tensorflow as tf
-import tensorflow_hub as hub
-from PIL import ImageDraw
-import json
-import requests
+# import tensorflow as tf
+# import tensorflow_hub as hub
+# from PIL import ImageDraw
+# import json
+# import requests
 
-def get_class_names():
-    """Returns the class names dictionary for OpenImages V4 dataset."""
-    class_names_url = "https://storage.googleapis.com/openimages/v6/oidv6-class-descriptions.csv"
-    class_id_to_name = {}
-    response = requests.get(class_names_url)
-    response_text = response.text.split("\r\n")[:-1]
+# def get_class_names():
+#     """Returns the class names dictionary for OpenImages V4 dataset."""
+#     class_names_url = "https://storage.googleapis.com/openimages/v6/oidv6-class-descriptions.csv"
+#     class_id_to_name = {}
+#     response = requests.get(class_names_url)
+#     response_text = response.text.split("\r\n")[:-1]
 
-    for row in response_text:
-        id, name = row.split(',', 1)
-        class_id_to_name[int(id)] = name
+#     for row in response_text:
+#         id, name = row.split(',', 1)
+#         class_id_to_name[int(id)] = name
 
-    return class_id_to_name
+#     return class_id_to_name
 
-class_id_to_name = get_class_names()
+# class_id_to_name = get_class_names()
 
 
-model=tf.saved_model.load("saved_resnetmodel_dir\\")
-print(model.signatures)
-def detect_objects(image_path, objects_to_detect=None):
+# model=tf.saved_model.load("saved_resnetmodel_dir\\")
+# print(model.signatures)
+# def detect_objects(image_path, objects_to_detect=None):
 
-    # Load the image
-    original_image = Image.open(image_path)
-    byte_image = tf.keras.preprocessing.image.img_to_array(original_image)
-    byte_image = tf.expand_dims(byte_image, 0)
+#     # Load the image
+#     original_image = Image.open(image_path)
+#     byte_image = tf.keras.preprocessing.image.img_to_array(original_image)
+#     byte_image = tf.expand_dims(byte_image, 0)
 
-    # Object detection
-    detection_output = model(input_tensor = tf.constant(byte_image))
-    num_detections = int(detection_output["num_detections"])
-    object_class_ids = detection_output["detection_classes"][0].numpy().astype(int)
-    object_boxes = detection_output["detection_boxes"][0].numpy()
-    object_scores = detection_output["detection_scores"][0].numpy()
+#     # Object detection
+#     detection_output = model(input_tensor = tf.constant(byte_image))
+#     num_detections = int(detection_output["num_detections"])
+#     object_class_ids = detection_output["detection_classes"][0].numpy().astype(int)
+#     object_boxes = detection_output["detection_boxes"][0].numpy()
+#     object_scores = detection_output["detection_scores"][0].numpy()
 
-    # Draw the detected objects
-    draw = ImageDraw.Draw(original_image)
-    detected_objects = []
+#     # Draw the detected objects
+#     draw = ImageDraw.Draw(original_image)
+#     detected_objects = []
 
-    # Draw the detected objects
-    for i in range(num_detections):
-        # Check if the detection is in the provided list of objects_to_detect
-        if objects_to_detect is None or object_class_ids[i] in objects_to_detect:
-            object_name = class_id_to_name[object_class_ids[i]]
-            object_score = object_scores[i]
-            detected_objects.append((object_name, object_score))
+#     # Draw the detected objects
+#     for i in range(num_detections):
+#         # Check if the detection is in the provided list of objects_to_detect
+#         if objects_to_detect is None or object_class_ids[i] in objects_to_detect:
+#             object_name = class_id_to_name[object_class_ids[i]]
+#             object_score = object_scores[i]
+#             detected_objects.append((object_name, object_score))
 
-            y1, x1, y2, x2 = object_boxes[i].tolist()
-            width, height = original_image.size
-            draw.rectangle(((x1 * width, y1 * height), (x2 * width, y2 * height)), outline="red", width=3)
+#             y1, x1, y2, x2 = object_boxes[i].tolist()
+#             width, height = original_image.size
+#             draw.rectangle(((x1 * width, y1 * height), (x2 * width, y2 * height)), outline="red", width=3)
 
-    return detected_objects
+#     return detected_objects
 
-# 타겟 이미지의 객체 감지 및 출력
-target_image_detected_objects = detect_objects(target_image_path)
-print("타겟 이미지의 객체 class:")
-for obj, score in target_image_detected_objects:
-    print(f"- {obj}")
+# # 타겟 이미지의 객체 감지 및 출력
+# target_image_detected_objects = detect_objects(target_image_path)
+# print("타겟 이미지의 객체 class:")
+# for obj, score in target_image_detected_objects:
+#     print(f"- {obj}")
 
-print("\n")
+# print("\n")
 
-# 상위 10개 이미지의 객체 감지 및 출력
-print("Top-10 유사한 이미지의 객체 class:")
-for index, (image_path, similarity) in enumerate(top_results):
-    print(f"{index + 1}. 유사도: {similarity:.4f}")
+# # 상위 10개 이미지의 객체 감지 및 출력
+# print("Top-10 유사한 이미지의 객체 class:")
+# for index, (image_path, similarity) in enumerate(top_results):
+#     print(f"{index + 1}. 유사도: {similarity:.4f}")
 
-    detected_objects = detect_objects(image_path)
-    for obj, score in detected_objects:
-        print(f"- {obj}")
+#     detected_objects = detect_objects(image_path)
+#     for obj, score in detected_objects:
+#         print(f"- {obj}")
 
-    print("\n")
+#     print("\n")
