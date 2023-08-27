@@ -7,8 +7,7 @@ from PIL import Image
 from fastai.vision.all import *
 
 # Load the EfficientNet model
-model_filepath = '"C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\models\\saved_model.pb"'
-model = tf.saved_model.load(model_filepath)
+model = tf.saved_model.load('/kaggle/input/fake-real-logo-detection-efficientnet/EfficientNet')
 
 classes = ["Fake", "Genuine"]
 
