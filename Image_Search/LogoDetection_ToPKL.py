@@ -19,7 +19,6 @@ def is_infringement(x):
 
 # EfficientNet 모델을 사용하여 이미지를 분류
 def classify_image(path): 
-    img = Image.open(path).convert('RGB')
     img = img.resize((300, 300 * img.size[1] // img.size[0]), Image.ANTIALIAS)
     inp_numpy = np.array(img)[None]
     inp = tf.constant(inp_numpy, dtype='float32')
@@ -38,31 +37,40 @@ def main():
     )
     dls.show_batch(max_n=10)
     
-    from IPython.display import display
+    import requests
+    from PIL import Image
+    import io
+    
+    test_img_path = ["https://w7.pngwing.com/pngs/869/485/png-transparent-google-logo-computer-icons-google-text-logo-google-logo-thumbnail.png"]
+    if len(test_img_path) > 0:
+        for image_url in test_img_path:
+            response = requests.get(image_url)
 
-    test_img_path = uploader.data[0]
-    result = classify_image(test_img_path)
-    print(f"Is this a trademark infringement?: {result}.")
+            # Check if the request was successful
+            if response.status_code == 200:
+                image_data = response.content
 
-    # 파일명과 결과를 피클 파일로 저장
-    filename = uploader.metadata[0]['name']
-    result_dict = {
-        'filename': filename,
-        'infringement': bool(result == "Fake"),
-    }
+                try:
+                    # Try to open the image from the data
+                    img = Image.open(io.BytesIO(image_data)).convert('RGB')
 
-    with open('results.pkl', 'wb') as f:
-        pickle.dump(result_dict, f)
+                    filename = image_url.split("/")[-1]
+
+                    result = classify_image(img)
+                    
+                    print(f"Is this a trademark infringement?: {result}.")
+
+                    result_dict = {
+                        'filename': filename,
+                        'infringement': bool(result == "Fake"),
+                    }
+
+                    with open('results.pkl', 'wb') as f:
+                        pickle.dump(result_dict, f)
+                    print(1)
+                except IOError:
+                    print(f"Cannot identify image file from URL: {image_url}")
 
 if __name__ == '__main__':
     main()
-from IPython.display import display, clear_output
-import io
-from PIL.Image import open as open_image
-
-uploader = file_images
-n_uploaded_imgs = len(uploader)
-if n_uploaded_imgs > 0:
-    for img_data in uploader.data:
-        clear_output()
-        display(open_image(io.BytesIO(img_data)))
+    
