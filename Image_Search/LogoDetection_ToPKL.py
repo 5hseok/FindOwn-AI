@@ -5,10 +5,9 @@ from pathlib import Path
 import tensorflow as tf
 from PIL import Image
 from fastai.vision.all import *
-
+from ipywidgets import FileUpload, widget
 # Load the EfficientNet model
-model = tf.saved_model.load('/kaggle/input/fake-real-logo-detection-efficientnet/EfficientNet')
-
+model = tf.saved_model.load('C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\EfficientNet')
 classes = ["Fake", "Genuine"]
 
 path = Path('C:/Users/DGU_ICE/FindOwn/ImageDB/Logos')   # 데이터셋 경로
@@ -19,7 +18,7 @@ def is_infringement(x):
     return '/infringing/' in x
 
 # EfficientNet 모델을 사용하여 이미지를 분류
-def classify_image(path):
+def classify_image(path): 
     img = Image.open(path).convert('RGB')
     img = img.resize((300, 300 * img.size[1] // img.size[0]), Image.ANTIALIAS)
     inp_numpy = np.array(img)[None]
@@ -27,6 +26,7 @@ def classify_image(path):
     class_scores = model(inp)[0].numpy()
     return classes[class_scores.argmax()]
 
+file_images = [f for f in os.listdir(path) if f.endswith('.jpg')]
 def main():
     dls = ImageDataLoaders.from_path_func(
         path,
@@ -37,12 +37,9 @@ def main():
         item_tfms=Resize(224)
     )
     dls.show_batch(max_n=10)
+    
+    from IPython.display import display
 
-    # 이미지 업로드
-    uploader = widgets.FileUpload()
-    uploader
-
-    # 테스트 이미지에 대한 결과 예측
     test_img_path = uploader.data[0]
     result = classify_image(test_img_path)
     print(f"Is this a trademark infringement?: {result}.")
@@ -59,12 +56,12 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 from IPython.display import display, clear_output
 import io
 from PIL.Image import open as open_image
 
-n_uploaded_imgs = len(uploader.data)
+uploader = file_images
+n_uploaded_imgs = len(uploader)
 if n_uploaded_imgs > 0:
     for img_data in uploader.data:
         clear_output()
