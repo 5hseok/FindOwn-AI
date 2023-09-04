@@ -27,7 +27,7 @@ Id[:]
 
 train=pd.DataFrame()
 train=train.assign(filename=Id)
-train.head()
+# train.head()
 
 
 train['label']=train['filename']
@@ -38,7 +38,7 @@ train.head()
 # In[17]:
 
 
-train['label'] = train['label'].str.split('/').str[0]
+train['label'] = train['label'].str.split('\\').str[0]
 train.head()
 
 
@@ -86,25 +86,6 @@ test.head()
 
 
 result=[]
-for i in test.filename:
-    img = Image.open(i).convert('RGB')
-    img = img.resize((300, 300 * img.size[1] // img.size[0]), Image.ANTIALIAS)
-    inp_numpy = np.array(img)[None]
-    inp = tf.constant(inp_numpy, dtype='float32')
-    class_scores = model(inp)[0].numpy()
-    result.append(classes[class_scores.argmax()])
-result[:]
-
-
-# In[23]:
-
-
-test=test.assign(prediction=result)
-test.head()
-
-
-# In[24]:
-result=[]
 for i in train.filename:
     img = Image.open(i).convert('RGB')
     img = img.resize((300, 300 * img.size[1] // img.size[0]), Image.ANTIALIAS)
@@ -113,9 +94,27 @@ for i in train.filename:
     class_scores = model(inp)[0].numpy()
     result.append(classes[class_scores.argmax()])
 result[:]
-# In[25]:
+
+
+# In[2est
+
 train=train.assign(prediction=result)
-train.head()
+train.tail()
+
+
+# In[24]:
+result=[]
+for i in test.filename:
+    img = Image.open(i).convert('RGB')
+    img = img.resize((300, 300 * img.size[1] // img.size[0]), Image.ANTIALIAS)
+    inp_numpy = np.array(img)[None]
+    inp = tf.constant(inp_numpy, dtype='float32')
+    class_scores = model(inp)[0].numpy()
+    result.append(classes[class_scores.argmax()])
+result[:]
+# In[25]:
+test=test.assign(prediction=result)
+test.tail()
 
 # In[26]:
 from sklearn.metrics import classification_report
