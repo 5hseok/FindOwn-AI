@@ -5,11 +5,9 @@ from pathlib import Path
 import tensorflow as tf
 from PIL import Image
 from fastai.vision.all import *
-
+from ipywidgets import FileUpload, widget
 # Load the EfficientNet model
-model_filepath = '"C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\models\\saved_model.pb"'
-model = tf.saved_model.load(model_filepath)
-
+model = tf.saved_model.load('C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\EfficientNet')
 classes = ["Fake", "Genuine"]
 
 path = Path('C:/Users/DGU_ICE/FindOwn/ImageDB/Logos')   # 데이터셋 경로
@@ -20,14 +18,14 @@ def is_infringement(x):
     return '/infringing/' in x
 
 # EfficientNet 모델을 사용하여 이미지를 분류
-def classify_image(path):
-    img = Image.open(path).convert('RGB')
+def classify_image(path): 
     img = img.resize((300, 300 * img.size[1] // img.size[0]), Image.ANTIALIAS)
     inp_numpy = np.array(img)[None]
     inp = tf.constant(inp_numpy, dtype='float32')
     class_scores = model(inp)[0].numpy()
     return classes[class_scores.argmax()]
 
+file_images = [f for f in os.listdir(path) if f.endswith('.jpg')]
 def main():
     dls = ImageDataLoaders.from_path_func(
         path,
@@ -38,35 +36,41 @@ def main():
         item_tfms=Resize(224)
     )
     dls.show_batch(max_n=10)
+    
+    import requests
+    from PIL import Image
+    import io
+    
+    test_img_path = ["https://w7.pngwing.com/pngs/869/485/png-transparent-google-logo-computer-icons-google-text-logo-google-logo-thumbnail.png"]
+    if len(test_img_path) > 0:
+        for image_url in test_img_path:
+            response = requests.get(image_url)
 
-    # 이미지 업로드
-    uploader = widgets.FileUpload()
-    uploader
+            # Check if the request was successful
+            if response.status_code == 200:
+                image_data = response.content
 
-    # 테스트 이미지에 대한 결과 예측
-    test_img_path = uploader.data[0]
-    result = classify_image(test_img_path)
-    print(f"Is this a trademark infringement?: {result}.")
+                try:
+                    # Try to open the image from the data
+                    img = Image.open(io.BytesIO(image_data)).convert('RGB')
 
-    # 파일명과 결과를 피클 파일로 저장
-    filename = uploader.metadata[0]['name']
-    result_dict = {
-        'filename': filename,
-        'infringement': bool(result == "Fake"),
-    }
+                    filename = image_url.split("/")[-1]
 
-    with open('results.pkl', 'wb') as f:
-        pickle.dump(result_dict, f)
+                    result = classify_image(img)
+                    
+                    print(f"Is this a trademark infringement?: {result}.")
+
+                    result_dict = {
+                        'filename': filename,
+                        'infringement': bool(result == "Fake"),
+                    }
+
+                    with open('results.pkl', 'wb') as f:
+                        pickle.dump(result_dict, f)
+                    print(1)
+                except IOError:
+                    print(f"Cannot identify image file from URL: {image_url}")
 
 if __name__ == '__main__':
     main()
-
-from IPython.display import display, clear_output
-import io
-from PIL.Image import open as open_image
-
-n_uploaded_imgs = len(uploader.data)
-if n_uploaded_imgs > 0:
-    for img_data in uploader.data:
-        clear_output()
-        display(open_image(io.BytesIO(img_data)))
+    
