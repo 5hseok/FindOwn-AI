@@ -5,12 +5,29 @@
 
 
 import tensorflow as tf
+from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
 import numpy as np 
 from PIL import Image
 
-model = tf.saved_model.load('C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\EfficientNet')
-classes = [ "Fake" ,  "Genuine" ]
+# model = tf.saved_model.load('C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\EfficientNet')
+base_model = tf.keras.applications.EfficientNetB0(weights='imagenet', include_top=False)
+for layer in base_model.layers[:-10]:
+    #여기서의 -10도 임의의 숫자이니 변동 가능
+    layer.trainable = False
+    
+x=base_model.output
+x=tf.keras.layers.GlobalAveragePooling2D()(x)
+predictions = tf.keras.layers.Dense(2, activation='sigmoid')(x)
+#activation 값은 softmax 등으로 변경 가능
+    
+model = tf.keras.Model(inputs=base_model.input, outputs=predictions)
 
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),metrics=['accuracy'])
+
+
+classes = [ "Fake" ,  "Genuine" ]
 
 # In[14]:
 Id=[]
