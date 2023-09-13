@@ -135,117 +135,34 @@ for image_path, similarity in top_results:
 # average_similarity = sum(similarities) / len(similarities)
 # print("Average similarity: {:.4f}%".format(round(average_similarity * 100,4)))
 
-# import csv
-# # CSV 파일을 쓰기 모드로 연다.
-# with open('image_similarity_Top10image.csv', mode='w', newline='') as csv_file:
-#     csv_writer = csv.writer(csv_file)
-#     csv_writer.writerow(['Image', 'Target Image', 'Similarity'])
+import csv
+# CSV 파일을 쓰기 모드로 연다.
+with open('image_similarity_Top10image.csv', mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Image', 'Target Image', 'Similarity'])
 
-#     for image_path, similarity in top_results:
-#         # 유사도 값을 CSV 파일에 기록한다.
-#         csv_writer.writerow([image_path, target_image_path, similarity * 100])
+    for image_path, similarity in top_results:
+        # 유사도 값을 CSV 파일에 기록한다.
+        csv_writer.writerow([image_path, target_image_path, similarity * 100])
 
-# 생성할 subplot의 행과 열 계산
-n_rows = 3
-n_cols = 4
+for image_path, similarity in top_results:
+# 이미지와 유사도 출력
+    plt.figure(figsize=(10, 5)) # 적절한 크기를 지정
 
-# 하나의 figure에서 타겟 이미지와 top-10 이미지 출력
-plt.figure(figsize=(15, 12))
-
-# 타겟 이미지 출력
-image = cv2.imread(target_image_path)
-image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-plt.subplot(n_rows, n_cols, 1)
-plt.title("Target Image")
-plt.imshow(image)
-plt.axis('off')
-
-# 상위 10개 이미지 출력
-for i, (image_path, similarity) in enumerate(top_results):
+    # 첫 번째 이미지와 유사도 값 출력
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    plt.subplot(n_rows, n_cols, i + 2)
-    plt.title(f"Image {i + 1} (similarity: {similarity * 100:.2f}%)")
+    plt.subplot(1, 2, 1) # 1행 1열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
+    plt.title(f"Image 1 Similarity: {similarity * 100:.2f}%")
     plt.imshow(image)
     plt.axis('off')
-
-# plt.tight_layout()
-plt.show()
-
-################## 타겟 이미지와 가장 유사한 10개의 이미지들로 객체 인식 돌리기 ####3###################
-# import tensorflow as tf
-# import tensorflow_hub as hub
-# from PIL import ImageDraw
-# import json
-# import requests
-
-# def get_class_names():
-#     """Returns the class names dictionary for OpenImages V4 dataset."""
-#     class_names_url = "https://storage.googleapis.com/openimages/v6/oidv6-class-descriptions.csv"
-#     class_id_to_name = {}
-#     response = requests.get(class_names_url)
-#     response_text = response.text.split("\r\n")[:-1]
-
-#     for row in response_text:
-#         id, name = row.split(',', 1)
-#         class_id_to_name[int(id)] = name
-
-#     return class_id_to_name
-
-# class_id_to_name = get_class_names()
-
-
-# model=tf.saved_model.load("saved_resnetmodel_dir\\")
-# print(model.signatures)
-# def detect_objects(image_path, objects_to_detect=None):
-
-#     # Load the image
-#     original_image = Image.open(image_path)
-#     byte_image = tf.keras.preprocessing.image.img_to_array(original_image)
-#     byte_image = tf.expand_dims(byte_image, 0)
-
-#     # Object detection
-#     detection_output = model(input_tensor = tf.constant(byte_image))
-#     num_detections = int(detection_output["num_detections"])
-#     object_class_ids = detection_output["detection_classes"][0].numpy().astype(int)
-#     object_boxes = detection_output["detection_boxes"][0].numpy()
-#     object_scores = detection_output["detection_scores"][0].numpy()
-
-#     # Draw the detected objects
-#     draw = ImageDraw.Draw(original_image)
-#     detected_objects = []
-
-#     # Draw the detected objects
-#     for i in range(num_detections):
-#         # Check if the detection is in the provided list of objects_to_detect
-#         if objects_to_detect is None or object_class_ids[i] in objects_to_detect:
-#             object_name = class_id_to_name[object_class_ids[i]]
-#             object_score = object_scores[i]
-#             detected_objects.append((object_name, object_score))
-
-#             y1, x1, y2, x2 = object_boxes[i].tolist()
-#             width, height = original_image.size
-#             draw.rectangle(((x1 * width, y1 * height), (x2 * width, y2 * height)), outline="red", width=3)
-
-#     return detected_objects
-
-# # 타겟 이미지의 객체 감지 및 출력
-# target_image_detected_objects = detect_objects(target_image_path)
-# print("타겟 이미지의 객체 class:")
-# for obj, score in target_image_detected_objects:
-#     print(f"- {obj}")
-
-# print("\n")
-
-# # 상위 10개 이미지의 객체 감지 및 출력
-# print("Top-10 유사한 이미지의 객체 class:")
-# for index, (image_path, similarity) in enumerate(top_results):
-#     print(f"{index + 1}. 유사도: {similarity:.4f}")
-
-#     detected_objects = detect_objects(image_path)
-#     for obj, score in detected_objects:
-#         print(f"- {obj}")
-
-#     print("\n")
+    
+    image=cv2.imread(target_image_path)
+    image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+    plt.subplot(1,2,2)
+    plt.title("Target Image")
+    plt.imshow(image)
+    plt.axis('off')
+    
+    plt.show()
