@@ -311,8 +311,8 @@ with open('FindOwn_AI.pkl','wb') as file:
     pickle.dump(data_to_pickle,file)
 
 # # 필요할 때 피클 파일에서 코드와 dataset을 불러옵니다.
-# with open('your_pickle_file.pkl', 'rb') as file:
+# with open('FindOwn_AI.pkl', 'rb') as file:
 #     loaded_data = pickle.load(file)
 
-# loaded_code = loaded_data['python_code']
 # loaded_dataset = loaded_data['dataset']
+# print(loaded_data['dataset'])
