@@ -97,7 +97,7 @@ image_pairs = [
     # 다른 이미지 URL 쌍을 여기에 추가하세요
 ]
 
-root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\Image"
+root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageTrademark"
 #한 쌍의 이미지 파일을 넣는 이미지 파일 dir 주소. 여기서 소송 및 분쟁에 관련된 이미지 쌍을 가져온다.
 #자신의 로컬에 있는 Image 파일 주소로 설정할 것.
 
