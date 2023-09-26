@@ -19,7 +19,7 @@ def create_feature_extractor(model, return_nodes=None):
 
     return return_nodes_output
 
-model = EfficientNet.from_pretrained('efficientnet-b0')
+model = EfficientNet.from_pretrained('efficientnet-b7')
 model_features = create_feature_extractor(model,return_nodes={'avgpool':'avgpool'})
 model.eval()    
 
@@ -69,7 +69,6 @@ def is_image_file(filename):
 def cos_sim(A, B):
     return dot(A, B) / (norm(A) * norm(B))
 
-
 def predict(image_path):
     resized_image = image_resize_local(image_path)
     if resized_image is None:
@@ -90,7 +89,7 @@ import re
 from collections import defaultdict
 
 # 타겟 이미지 경로
-target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\uefa-champions-league-eps-vector-logo-400x400.png"
+target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\manchester-city-logo-vector-download-400x400.jpg"
 
 # 디렉토리에서 이미지 파일들 찾기
 image_files = []
@@ -107,7 +106,6 @@ import urllib.request
 from matplotlib import pyplot as plt
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
-
 
 # 타겟 이미지 특징 추출
 def process_image(image_path):
@@ -137,44 +135,142 @@ print(f"병렬 처리 시간: {elapsed_time}초")
 for image_path, similarity in top_results:
     print("Similarity between", image_path, "and target image:",similarity)
 
+# 생성할 subplot의 행과 열 계산
+n_rows = 3
+n_cols = 4
 
-# # 유사도의 평균을 계산합니다
-# average_similarity = sum(similarities) / len(similarities)
-# print("Average similarity: {:.4f}%".format(round(average_similarity * 100,4)))
+# 하나의 figure에서 타겟 이미지와 top-10 이미지 출력
+plt.figure(figsize=(15, 12))
 
-import csv
-# CSV 파일을 쓰기 모드로 연다.
-with open('image_similarity_Top10image.csv', mode='w', newline='') as csv_file:
-    csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Image', 'Target Image', 'Similarity'])
+# 타겟 이미지 출력
+image = cv2.imread(target_image_path)
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    for image_path, similarity in top_results:
-        # 유사도 값을 CSV 파일에 기록한다.
-        csv_writer.writerow([image_path, target_image_path, similarity * 100])
-
-for image_path, similarity in top_results:
-# 이미지와 유사도 출력
-    plt.figure(figsize=(10, 5)) # 적절한 크기를 지정
-
-    # 첫 번째 이미지와 유사도 값 출력
+plt.subplot(n_rows, n_cols, 1)
+plt.title("Target Image")
+plt.imshow(image)
+plt.axis('off')
+top10_image_list=[]
+# 상위 10개 이미지 출력
+for i, (image_path, similarity) in enumerate(top_results):
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    top10_image_list.append(image_path)
+    plt.subplot(n_rows, n_cols, i + 2)
+    plt.title(f"Image {i + 1} (similarity: {similarity * 100:.2f}%)")
+    plt.imshow(image)
+    plt.axis('off')
 
-    plt.subplot(1, 2, 1) # 1행 1열의 subplot에서 첫 번째 위치에 이미지를 넣습니다
-    plt.title(f"Image 1 Similarity: {similarity * 100:.2f}%")
-    plt.imshow(image)
-    plt.axis('off')
+# plt.tight_layout()
+plt.show()
+import tensorflow as tf
+import tensorflow_hub as hub
+import json
+import matplotlib.pyplot as plt
+import cv2
+
+# Load the model
+model = hub.load("https://tfhub.dev/tensorflow/efficientdet/d7/1")
+
+# Load image and preprocess it
+image = tf.image.decode_jpeg(tf.io.read_file(target_image_path))
+if image.shape[-1] != 3:
+    if image.shape[-1] == 1:
+        # Convert grayscale to RGB
+        image = tf.image.grayscale_to_rgb(image)
+    elif image.shape[-1] == 4:
+        # Convert RGBA to RGB by discarding the alpha channel
+        image = image[..., :3]
+        
+image = tf.image.resize(image, [224, 224])
+image = tf.cast(image, dtype=tf.uint8)
+
+image = image[tf.newaxis, ...] # Add batch dimension and normalize
+
+# Run detection
+detections = model(image)
+
+with open('coco-labels-2014_2017.txt','r') as f:
+    mscoco_labels = [line.rstrip() for line in f]
+
+# Print detected classes and bounding boxes
+check = False
+target_image_label = []
+for i in range(int(detections['num_detections'])):
+    score = detections['detection_scores'][0][i]
     
-    image=cv2.imread(target_image_path)
-    image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-    plt.subplot(1,2,2)
-    plt.title("Target Image")
-    plt.imshow(image)
-    plt.axis('off')
+    # Only consider detections with a confidence score of at least 0.5
+    if score >= 0.4:
+        class_id = int(detections['detection_classes'][0][i])
+        box = detections['detection_boxes'][0][i]
+
+        label = mscoco_labels[class_id]
+        check = True
+        print(f"Detected class: {label}")
+        target_image_label.append(label)
+        print("Detection score :", score.numpy())
+if check == False:
+    print("No object detected")
+
+##############top 10 images object detected##############
+final_labels=[]
+
+for i in range(len(top10_image_list)):
+    image = tf.image.decode_jpeg(tf.io.read_file(top10_image_list[i]))
+    if image.shape[-1] != 3:
+        if image.shape[-1] == 1:
+            # Convert grayscale to RGB
+            image = tf.image.grayscale_to_rgb(image)
+        elif image.shape[-1] == 4:
+            # Convert RGBA to RGB by discarding the alpha channel
+            image = image[..., :3]
+            
+    image = tf.image.resize(image, [224, 224])
+    image = tf.cast(image, dtype=tf.uint8)
+
+    image = image[tf.newaxis, ...] # Add batch dimension and normalize
+
+    # Run detection
+    detections = model(image)
+    check = False
+    for j in range(int(detections['num_detections'])):
+        score = detections['detection_scores'][0][j]
+        
+        # Only consider detections with a confidence score of at least 0.5
+        if score >= 0.4:
+            class_id = int(detections['detection_classes'][0][j])
+            box = detections['detection_boxes'][0][j]
+            label = mscoco_labels[class_id]
+            check = True
+            print(f"Detected class",top10_image_list[i],":" ,{label})
+            final_labels.append(label)
+            print("Detection score :", score.numpy())
     
-    plt.show()
+endpoint = 0
+final_result_images_index = []
+print(final_labels)
+for i in range(len(final_labels)):
+    if final_labels[i] in target_image_label:
+        print(final_labels[i],i)
+        final_result_images_index.append(i)
+
+if endpoint == 0:
+    print("no images")
+    
+plt.subplot(1, len(final_result_images_index) + 1, 1)
+plt.imshow(cv2.imread(target_image_path))
+plt.axis('off')
+
+for i in range(len(final_result_images_index)):
+    plt.subplot(1, len(final_result_images_index) + 1, i+2)
+    plt.imshow(cv2.imread(top10_image_list[final_result_images_index[i]]))
+    plt.axis('off')
+plt.show()
 
 """
+
+import os
+import shutil
 
 # 이 예제에서는 dataset을 리스트 형태로 가정합니다.
 dataset_url = []
@@ -186,12 +282,37 @@ data_to_pickle = {
     'dataset' : dataset_url
 }
 
-with open('FindOwn.pkl','wb') as file:
+#######################dataset을 구성하는 이미지가 url이 아닌 로컬 주소에서 가져올 경우########################
+
+dataset_in = []
+# 이미지 파일의 확장자 목록
+image_extensions = ['.jpg', '.jpeg', '.png']
+
+# dataset_local 경로에서 이미지 파일을 찾아서 dataset에 추가
+for root, dirs, files in os.walk(dataset_local):
+    for file in files:
+        _, ext = os.path.splitext(file)
+        if ext.lower() in image_extensions:
+            image_path = os.path.join(root, file)
+            dataset_in.append(image_path)
+
+# 데이터셋에 이미지가 없는 경우 예외 처리
+if len(dataset_in) == 0:
+    print("No images found in the dataset!")
+    
+#######################dataset을 구성하는 이미지가 url이 아닌 로컬 주소에서 가져올 경우########################
+
+data_to_pickle = {
+    'python_code' : code,
+    'dataset' : dataset_in
+}
+
+with open('FindOwn_AI.pkl','wb') as file:
     pickle.dump(data_to_pickle,file)
 
 # # 필요할 때 피클 파일에서 코드와 dataset을 불러옵니다.
-# with open('your_pickle_file.pkl', 'rb') as file:
+# with open('FindOwn_AI.pkl', 'rb') as file:
 #     loaded_data = pickle.load(file)
 
-# loaded_code = loaded_data['python_code']
 # loaded_dataset = loaded_data['dataset']
+# print(loaded_data['dataset'])
