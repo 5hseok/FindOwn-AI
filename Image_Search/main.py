@@ -3,6 +3,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pickle
+import models
 
 # Pydantic 모델 정의
 class ImageSearchRequest(BaseModel):
@@ -12,11 +13,13 @@ class ImageSearchRequest(BaseModel):
 app = FastAPI()
     
 # 피클 파일에서 모델 로드
-with open('image_search_model.pkl','rb') as f:
-    similar_model=pickle.load(f)
-with open('image_object_detections.pkl', 'rb') as f:
-    Object_model = pickle.load(f)
+# with open('image_search_model.pkl','rb') as f:
+#     similar_model=pickle.load(f)
+# with open('image_object_detections.pkl', 'rb') as f:
+#     Object_model = pickle.load(f)
 
+similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos")
+Object_model  = models.Image_Object_Detections()
 #사용자가 등록한 이미지 경로
 target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\000002_ef67f5045e3a44bdb9001d956746a391.jpg"  
 
