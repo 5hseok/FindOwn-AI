@@ -3,12 +3,16 @@
 import models
 import pickle
 
-# Initialize the model.
-similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos")
+def main():
+    # Initialize the model.
+    similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos")
 
-# Extract features from all images.
-similar_model.extract_features()
+    # Extract features from all images.
+    similar_model.extract_features()
 
-# Save the features to a file.
-with open('features.pkl', 'wb') as f:
-    pickle.dump(similar_model.features, f)
+    # Save the features to a file.
+    with open('features.pkl', 'wb') as f:
+        pickle.dump(similar_model.features, f)
+
+if __name__ == '__main__':
+    main()
