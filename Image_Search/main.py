@@ -14,7 +14,7 @@ with open('features.pkl', 'rb') as f:
     features = pickle.load(f)
 
 # Initialize the models.
-similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos", pre_extracted_features=features)
+similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos", pre_extracted_features='features.pkl')
 Object_model  = models.Image_Object_Detections()
 
 @app.post("/search_images")
