@@ -13,11 +13,16 @@ import matplotlib.patches as patches
 from torchvision.models.detection.retinanet import retinanet_resnet50_fpn
 from collections import Counter
 import numpy as np
+from multiprocessing import Pool 
+import pickle 
 
 class Image_Search_Model:
     def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}):
         self.model = EfficientNet.from_pretrained(model_name)
         self.return_nodes = return_nodes
+        
+        if torch.cuda.is_available():
+            self.model = self.model.cuda()
 
         # 이미지 전처리: 크기 조정, 텐서 변환, 정규화 
         self.preprocess = Compose([
@@ -25,53 +30,62 @@ class Image_Search_Model:
             ToTensor(),
             Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
         ])
-        # 디렉토리에서 이미지 파일들 찾기
-        self.image_files = []
-        for (dirpath, dirnames, filenames) in os.walk(root_dir):
-            for filename in filenames:
-                if self.is_image_file(filename):
-                    self.image_files.append(os.path.join(dirpath, filename))
-    
-    def is_image_file(self,filename):
-        VALID_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.bmp', '.gif')
-        _, ext = os.path.splitext(filename)
-        return ext.lower() in VALID_EXTENSIONS
-    
-    def cos_sim(self,A,B):
-        return dot(A,B) / (norm(A) * norm(B))
+
+        # Load image files from the root directory 
+        self.image_files = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if f.endswith('.jpg') or f.endswith('.png')]
+         
 
     def predict(self,image_path):
+        
+        feature_file=image_path+'.feature.pkl'
+       
+        if os.path.isfile(feature_file):
+            with open(feature_file,'rb') as f:
+                return pickle.load(f)
+
         try:
-            image = Image.open(image_path).convert('RGB')
+            image=Image.open(image_path).convert('RGB')
             resized_image=self.preprocess(image)
+           
+            if torch.cuda.is_available():
+                resized_image=resized_image.cuda()
+               
         except Exception as e:
-            print(f"Error: Unable to open image {e}")
+            print(f"Error: Unable to open image {image_path}: {e}")
             return None
 
         with torch.no_grad():
             image_transformed=resized_image.unsqueeze(0)
-            predicted_result=self.model(image_transformed)
+           
+            # Move the tensor to CPU before detaching and converting it to numpy array   
+            predicted_result=self.model(image_transformed).cpu()
+            
             image_feature=torch.flatten(predicted_result)
 
+            # Save the feature vector to a file for future use
+            with open(feature_file,'wb') as f:
+                pickle.dump(image_feature.detach().numpy(),f)
+
         return image_feature.detach().numpy()
+
+    def extract_features(self):
+        with Pool() as p:
+            self.features=p.map(self.predict,self.image_files)
 
     def search_similar_images(self,target_image_path,topN=10):
         
         target_embedding=self.predict(target_image_path)
-
-        similarities=[]
-        
-        for image_file in self.image_files:
-            source_embedding=self.predict(image_file)
-
-            if source_embedding is not None and target_embedding is not None:
-                similarity=self.cos_sim(source_embedding,target_embedding)
-                similarities.append((image_file,similarity))
-
-         #유사도 기준으로 내림차순 정렬 후 상위 N개 결과 반환 
-        top_results=sorted(similarities,key=lambda x:x[1],reverse=True)[:topN]
-
-        return top_results
+         
+        if target_embedding is not None:
+            distances=[]
+             
+            for feature in self.features:
+                distance=torch.nn.functional.cosine_similarity(torch.tensor(target_embedding),torch.tensor(feature),dim=0)
+                distances.append(distance.item())
+             
+            indices=np.argsort(distances)[::-1][:topN]
+             
+            return [(self.image_files[i],distances[i]) for i in indices]
     
 
 class Image_Object_Detections:
