@@ -17,6 +17,7 @@ with open('features.pkl', 'rb') as f:
 target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 similar_model = models.Image_Search_Model(target_image_path, pre_extracted_features='features.pkl')
 top_10_image_list = similar_model.search_similar_images(target_image_path)
+print(top_10_image_list)
 Object_model  = models.Image_Object_Detections()
 result = Object_model.search_similar_images(target_image_path,top_10_image_list)
 print(result)
