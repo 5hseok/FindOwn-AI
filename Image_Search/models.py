@@ -6,18 +6,17 @@ from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from numpy import dot
 from numpy.linalg import norm
 import torch
-from torchvision.models.detection.retinanet import retinanet_resnet50_fpn
+from torchvision.models.detection.retinanet import RetinaNet_ResNet50_FPN_Weights
 from torchvision.transforms import functional as F
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from torchvision.models.detection.retinanet import retinanet_resnet50_fpn
 from collections import Counter
 import numpy as np
 from multiprocessing import Pool 
 import pickle 
 
 class Image_Search_Model:
-    def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}):
+    def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
         self.return_nodes = return_nodes
         
@@ -33,8 +32,12 @@ class Image_Search_Model:
 
         # Load image files from the root directory 
         self.image_files = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if f.endswith('.jpg') or f.endswith('.png')]
-         
-
+        
+        # Load pre-extracted features if provided.
+        if pre_extracted_features is not None:
+            with open(pre_extracted_features,'rb') as f:
+                self.features=pickle.load(f)
+            
     def predict(self,image_path):
         
         feature_file=image_path+'.feature.pkl'
@@ -43,50 +46,30 @@ class Image_Search_Model:
             with open(feature_file,'rb') as f:
                 return pickle.load(f)
 
-        try:
-            image=Image.open(image_path).convert('RGB')
-            resized_image=self.preprocess(image)
-           
-            if torch.cuda.is_available():
-                resized_image=resized_image.cuda()
-               
-        except Exception as e:
-            print(f"Error: Unable to open image {image_path}: {e}")
-            return None
-
-        with torch.no_grad():
-            image_transformed=resized_image.unsqueeze(0)
-           
-            # Move the tensor to CPU before detaching and converting it to numpy array   
-            predicted_result=self.model(image_transformed).cpu()
-            
-            image_feature=torch.flatten(predicted_result)
-
-            # Save the feature vector to a file for future use
-            with open(feature_file,'wb') as f:
-                pickle.dump(image_feature.detach().numpy(),f)
-
-        return image_feature.detach().numpy()
-
     def extract_features(self):
-        with Pool() as p:
-            self.features=p.map(self.predict,self.image_files)
+         # If features are already loaded no need to do it again
+         if hasattr(self,"features"):
+             return
+         
+         with Pool() as p:
+             self.features=p.map(self.predict,self.image_files)
 
     def search_similar_images(self,target_image_path,topN=10):
         
-        target_embedding=self.predict(target_image_path)
+          # Extract feature from target image
+          target_embedding=self.predict(target_image_path)
          
-        if target_embedding is not None:
-            distances=[]
+          if target_embedding is not None and hasattr(self,"features"):
+              distances=[]
              
-            for feature in self.features:
-                distance=torch.nn.functional.cosine_similarity(torch.tensor(target_embedding),torch.tensor(feature),dim=0)
-                distances.append(distance.item())
+              for feature in self.features:
+                  distance=torch.nn.functional.cosine_similarity(torch.tensor(target_embedding),torch.tensor(feature),dim=0)
+                  distances.append(distance.item())
              
-            indices=np.argsort(distances)[::-1][:topN]
+              indices=np.argsort(distances)[::-1][:topN]
              
-            return [(self.image_files[i],distances[i]) for i in indices]
-    
+              return [(self.image_files[i],distances[i]) for i in indices]
+
 
 class Image_Object_Detections:
     def __init__(self,topN=10):
@@ -94,7 +77,7 @@ class Image_Object_Detections:
         self.topN_object = []
         for i in range(topN):
             self.topN_object.append(set())
-        self.model = retinanet_resnet50_fpn(pretrained=True)
+        self.model = self.models.detection.retinanet_resnet50_fpn(weights=RetinaNet_ResNet50_FPN_Weights.COCO_V1)
         self.model.eval()
         if torch.cuda.is_available():
             self.model = self.model.cuda()
