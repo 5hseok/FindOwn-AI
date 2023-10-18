@@ -14,6 +14,8 @@ from collections import Counter
 import numpy as np
 from multiprocessing import Pool 
 import pickle 
+import torchvision.models as models
+
 
 class Image_Search_Model:
     def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
@@ -77,7 +79,7 @@ class Image_Object_Detections:
         self.topN_object = []
         for i in range(topN):
             self.topN_object.append(set())
-        self.model = self.models.detection.retinanet_resnet50_fpn(weights=RetinaNet_ResNet50_FPN_Weights.COCO_V1)
+        self.model = models.detection.retinanet_resnet50_fpn(weights=RetinaNet_ResNet50_FPN_Weights.COCO_V1)
         self.model.eval()
         if torch.cuda.is_available():
             self.model = self.model.cuda()
