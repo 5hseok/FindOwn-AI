@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import models
+import pickle
 
 class ImageSearchRequest(BaseModel):
     target_image_path: str
@@ -8,17 +9,13 @@ class ImageSearchRequest(BaseModel):
 
 app = FastAPI()
 
+# Load the features from a file.
+with open('features.pkl', 'rb') as f:
+    features = pickle.load(f)
+
 # Initialize the models.
-similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos")
+similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos", pre_extracted_features=features)
 Object_model  = models.Image_Object_Detections()
-
-similar_model.extract_features()
-# Test the models.
-target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\ace-cafe-london-logo-vector-download.jpg"  
-top10_images = similar_model.search_similar_images(target_image_path)
-final_result = Object_model.search_similar_images(target_image_path, top10_images)
-
-print(final_result)  # Print the final result for testing.
 
 @app.post("/search_images")
 async def search_images(request: ImageSearchRequest):
