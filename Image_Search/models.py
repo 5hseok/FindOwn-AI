@@ -38,8 +38,10 @@ class Image_Search_Model:
         
         # Load pre-extracted features if provided.
         if pre_extracted_features is not None:
+            print(f"Loading features from {pre_extracted_features}")
             with open(pre_extracted_features,'rb') as f:
                 self.features=pickle.load(f)
+            print(f"Loaded {len(self.features)} features")
             
     def predict(self,image_path):
         
