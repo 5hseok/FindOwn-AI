@@ -50,10 +50,12 @@ class Image_Search_Model:
     def extract_features(self):
          # If features are already loaded no need to do it again
         if hasattr(self,"features"):
-            return
+            return self.features
          
         with Pool() as p:
             self.features=p.map(self.predict,self.image_files)
+            
+        return self.features
 
     def search_similar_images(self,target_image_path,topN=10):
         
