@@ -156,7 +156,7 @@ class Image_Object_Detections:
 
     def visualize_detections(self, image_path, detected_objects,search_score):
         image = Image.open(image_path).convert("RGB")
-        image_tensor = F.to_tensor(image).unsqueeze(0)
+        image_tensor = to_tensor(image).unsqueeze(0)
 
         if torch.cuda.is_available():
             image_tensor = image_tensor.cuda()
