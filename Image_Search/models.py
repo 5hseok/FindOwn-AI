@@ -16,7 +16,6 @@ from multiprocessing import Pool
 import pickle 
 import torchvision.models as models
 
-
 class Image_Search_Model:
     def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
@@ -50,27 +49,27 @@ class Image_Search_Model:
 
     def extract_features(self):
          # If features are already loaded no need to do it again
-         if hasattr(self,"features"):
-             return
+        if hasattr(self,"features"):
+            return
          
-         with Pool() as p:
-             self.features=p.map(self.predict,self.image_files)
+        with Pool() as p:
+            self.features=p.map(self.predict,self.image_files)
 
     def search_similar_images(self,target_image_path,topN=10):
         
           # Extract feature from target image
-          target_embedding=self.predict(target_image_path)
+            target_embedding=self.predict(target_image_path)
          
-          if target_embedding is not None and hasattr(self,"features"):
-              distances=[]
+            if target_embedding is not None and hasattr(self,"features"):
+                distances=[]
              
-              for feature in self.features:
-                  distance=torch.nn.functional.cosine_similarity(torch.tensor(target_embedding),torch.tensor(feature),dim=0)
-                  distances.append(distance.item())
+                for feature in self.features:
+                    distance=torch.nn.functional.cosine_similarity(torch.tensor(target_embedding),torch.tensor(feature),dim=0)
+                    distances.append(distance.item())
              
-              indices=np.argsort(distances)[::-1][:topN]
+                indices=np.argsort(distances)[::-1][:topN]
              
-              return [(self.image_files[i],distances[i]) for i in indices]
+                return [(self.image_files[i],distances[i]) for i in indices]
 
 
 class Image_Object_Detections:
