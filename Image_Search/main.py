@@ -14,8 +14,9 @@ with open('features.pkl', 'rb') as f:
     features = pickle.load(f)
 
 # Initialize the models.
-target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
-similar_model = models.Image_Search_Model(target_image_path, pre_extracted_features='features.pkl')
+root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
+target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\000001_07cbc019bcf34352bf73e821ae50340a.jpg"
+similar_model = models.Image_Search_Model(root_dir, pre_extracted_features='features.pkl')
 top_10_image_list = similar_model.search_similar_images(target_image_path)
 print(top_10_image_list)
 Object_model  = models.Image_Object_Detections()
