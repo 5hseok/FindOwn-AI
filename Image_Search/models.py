@@ -15,6 +15,8 @@ import numpy as np
 from multiprocessing import Pool 
 import pickle 
 import torchvision.models as models
+import torch.nn.functional as F
+from torchvision.transforms.functional import to_tensor
 
 class Image_Search_Model:
     def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
@@ -43,13 +45,27 @@ class Image_Search_Model:
                 self.features=pickle.load(f)
             print(f"Loaded {len(self.features)} features")
             
-    def predict(self,image_path):
-        
-        feature_file=image_path+'.feature.pkl'
-       
-        if os.path.isfile(feature_file):
-            with open(feature_file,'rb') as f:
-                return pickle.load(f)
+    def predict(self, image_path):
+        # Load the image
+        img = Image.open(image_path).convert('RGB')
+
+        # Preprocess the image
+        img_tensor = self.preprocess(img)
+        img_tensor = img_tensor.unsqueeze(0)  # Add batch dimension
+
+        if torch.cuda.is_available():
+            img_tensor = img_tensor.cuda()
+
+        # Extract features using the model
+        with torch.no_grad():
+            self.model.eval()
+            features = self.model.extract_features(img_tensor)
+
+            # Average pooling and flatten for simplicity.
+            out_features = F.adaptive_avg_pool2d(features, 1).reshape(features.shape[0], -1).cpu().numpy()
+
+        return out_features[0]
+
 
     def extract_features(self):
          # If features are already loaded no need to do it again
@@ -92,7 +108,7 @@ class Image_Object_Detections:
     @staticmethod
     def get_display_name_from_id(target_id):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, 'data', 'mscoco_label_map.pbtxt')
+        file_path = os.path.join(current_dir, 'mscoco_label_map.pbtxt')
 
         with open(file_path, 'r') as f:
             lines = f.readlines()
@@ -122,7 +138,7 @@ class Image_Object_Detections:
             
     def detect_objects(self, image_path, search_score):
         image = Image.open(image_path).convert("RGB")
-        image_tensor = F.to_tensor(image).unsqueeze(0)
+        image_tensor = to_tensor(image).unsqueeze(0)
 
         if torch.cuda.is_available():
             image_tensor = image_tensor.cuda()
