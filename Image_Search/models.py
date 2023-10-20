@@ -89,7 +89,10 @@ class Image_Object_Detections:
             
     @staticmethod
     def get_display_name_from_id(target_id):
-        with open('mscoco_label_map.pbtxt', 'r') as f:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, 'data', 'mscoco_label_map.pbtxt')
+
+        with open(file_path, 'r') as f:
             lines = f.readlines()
 
         items = []
