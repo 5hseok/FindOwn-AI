@@ -32,7 +32,9 @@ class Image_Search_Model:
         ])
 
         # Load image files from the root directory 
-        self.image_files = [os.path.join(root_dir,f) for f in os.listdir(root_dir) if f.endswith('.jpg') or f.endswith('.png')]
+        self.image_files = [os.path.join(dirpath, f)
+                            for dirpath, dirnames, files in os.walk(root_dir)
+                            for f in files if f.endswith('.jpg') or f.endswith('.png')]
         
         # Load pre-extracted features if provided.
         if pre_extracted_features is not None:
