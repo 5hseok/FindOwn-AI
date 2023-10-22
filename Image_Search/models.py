@@ -154,25 +154,48 @@ class Image_Object_Detections:
                     
         return detected_objects
 
-    def visualize_detections(self, image_path, detected_objects,search_score):
-        image = Image.open(image_path).convert("RGB")
-        image_tensor = to_tensor(image).unsqueeze(0)
+    def visualize_image(self, image_path):
+        """Just display the original image without any annotations."""
+        image = Image.open(image_path)
+        plt.imshow(image)
+        plt.axis('off')  # Don't show axis
 
-        if torch.cuda.is_available():
-            image_tensor = image_tensor.cuda()
+    def search_similar_images(self,target_image_path,topN_image_list, search_score = 0.05):
+        
+        target_object=self.detect_objects(target_image_path,search_score)
+        
+        image_object_counts = []
 
-        outputs = self.model(image_tensor)
+        for image_path_in_list, precision in topN_image_list:
+            topN_object = self.detect_objects(image_path_in_list, search_score)
+            common_objects = list(target_object & topN_object)
+            image_object_counts.append((image_path_in_list, common_objects, len(common_objects)))
 
-        fig, ax = plt.subplots(1)
-        ax.imshow(image)
+        # Sort images by the number of common objects in descending order and select top 3
+        top3_images = sorted(image_object_counts, key=lambda x: x[2], reverse=True)[:3]
 
-        for i, output in enumerate(outputs):
-            for box, label, score in zip(output['boxes'], output['labels'], output['scores']):
-                if label != 15 and label != 28 and score >= search_score and self.get_display_name_from_id(label) in detected_objects:
-                    xmin, ymin, xmax, ymax = box.detach().cpu().numpy()
-                    rect = patches.Rectangle((xmin,ymin),(xmax-xmin),(ymax-ymin),linewidth=1,
-                                        edgecolor='r',facecolor='none')
-                    ax.add_patch(rect)
+        titles = ["Top 1", "Top 2", "Top 3", "Target Image"]
+
+        fig=plt.figure(figsize=(20,20))
+        
+        for i in range(len(top3_images)):
+            plt.subplot(2 ,2 , i+1) 
+            image_path,_ ,_ = top3_images[i]
+            
+            self.visualize_image(image_path) 
+            
+            plt.title(titles[i])
+        
+        # Show target image at last position
+        plt.subplot(2 ,2 ,4) 
+        
+        self.visualize_image(target_image_path) 
+
+        plt.title(titles[-1])
+        
+        plt.tight_layout() 
+        
+        return top3_images
                     
     def search_similar_images_test(self,target_image_path,topN_image_list, search_score = 0.05):
         # 이미지에 객체를 잘 탐지했나 이미지로 출력해줌.
@@ -214,30 +237,3 @@ class Image_Object_Detections:
             print("No")
         
         plt.show()
-    
-    def search_similar_images(self,target_image_path,topN_image_list, search_score = 0.05):
-        
-        target_object=self.detect_objects(target_image_path,search_score)
-        
-        image_object_counts = []
-
-        for image_path_in_list, precision in topN_image_list:
-            topN_object = self.detect_objects(image_path_in_list, search_score)
-            common_objects = list(target_object & topN_object)
-            image_object_counts.append((image_path_in_list, common_objects, len(common_objects)))
-
-        # Sort images by the number of common objects in descending order and select top 3
-        top3_images = sorted(image_object_counts, key=lambda x: x[1], reverse=True)[:3]
-
-        # Create a figure with multiple subplots
-        fig=plt.figure(figsize=(20,20))
-        
-        for i in range(len(top3_images)):
-            image_path, object_contents, object_count = top3_images[i]
-
-            # Visualize detections on the current image
-            detected_objects = self.detect_objects(image_path, search_score)
-            self.visualize_detections(image_path, detected_objects, search_score)
-
-        plt.show()
-        return top3_images
