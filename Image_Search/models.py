@@ -106,7 +106,7 @@ class Image_Search_Model:
                                 num_workers=4,
                                 pin_memory=True if torch.cuda.is_available() else False)
         
-        pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
+        pbar = tqdm(total=len(self.image_files), initial=len(processed_files), desc="Extracting Features")
         
 
         for paths, images in dataloader:
