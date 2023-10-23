@@ -88,9 +88,8 @@ class Image_Search_Model:
 
     def extract_features(self):
         checkpoint_interval = 640  # Save every 1,000 images.
+        batch_num = 0
 
-        features = []
-        
         # Load from checkpoint if it exists
         if os.path.isfile(self.checkpoint_file):
             with open(self.checkpoint_file, 'rb') as f:
@@ -100,23 +99,21 @@ class Image_Search_Model:
         processed_files = {path for path, _ in features}
 
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
-        
+
         dataloader = DataLoader(dataset,
                                 batch_size=32,
                                 num_workers=4,
                                 pin_memory=True if torch.cuda.is_available() else False)
-        
+
         pbar = tqdm(total=len(self.image_files), initial=len(processed_files), desc="Extracting Features")
-        
 
         for paths, images in dataloader:
             if torch.cuda.is_available():
                 images = images.cuda()
-            
+
             with torch.no_grad():
                 self.model.eval()
                 features_batch = self.model.extract_features(images)
-
                 out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).cpu().numpy()
 
             for path,out_feature in zip(paths,out_features_batch ):
@@ -127,11 +124,14 @@ class Image_Search_Model:
                     yield new_feature_pair
 
             pbar.update(images.shape[0])
-            print(len(features))
-            # Save intermediate results
-            if len(features) % checkpoint_interval == 0:
-                with open(self.checkpoint_file, 'wb') as f:
+
+            # Save intermediate results to separate files at intervals
+            if batch_num % checkpoint_interval == 0:
+                with open(f'features_checkpoint_{batch_num // checkpoint_interval}.pkl', 'wb') as f:
                     pickle.dump(features, f)
+                features.clear()   # Clear the list to save memory
+            
+            batch_num += 1
 
         pbar.close()
        
