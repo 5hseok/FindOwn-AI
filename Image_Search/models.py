@@ -87,7 +87,7 @@ class Image_Search_Model:
 
 
     def extract_features(self):
-        checkpoint_interval = 10000  # Save every 10,000 images.
+        checkpoint_interval = 640  # Save every 1,000 images.
 
         features = []
         
@@ -127,7 +127,7 @@ class Image_Search_Model:
                     yield new_feature_pair
 
             pbar.update(images.shape[0])
-
+            print(len(features))
             # Save intermediate results
             if len(features) % checkpoint_interval == 0:
                 with open(self.checkpoint_file, 'wb') as f:
