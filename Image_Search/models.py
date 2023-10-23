@@ -38,10 +38,10 @@ class ImageDataset(Dataset):
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, root_dir, model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
+    def __init__(self, root_dir, checkpoint_file,model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
         self.return_nodes = return_nodes
-        
+        self.checkpoint_file = checkpoint_file
         if torch.cuda.is_available():
             self.model = self.model.cuda()
 
@@ -87,36 +87,54 @@ class Image_Search_Model:
 
 
     def extract_features(self):
-            # If features are already loaded no need to do it again
-            if hasattr(self,"features"):
-                return self.features
+        checkpoint_interval = 10000  # Save every 10,000 images.
+
+        features = []
+        
+        # Load from checkpoint if it exists
+        if os.path.isfile(self.checkpoint_file):
+            with open(self.checkpoint_file, 'rb') as f:
+                features = pickle.load(f)
+                print(f"Loaded {len(features)} features from checkpoint")
+
+        processed_files = {path for path, _ in features}
+
+        dataset = ImageDataset(self.image_files, transform=self.preprocess)
+        
+        dataloader = DataLoader(dataset,
+                                batch_size=32,
+                                num_workers=4,
+                                pin_memory=True if torch.cuda.is_available() else False)
+        
+        pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
+        
+
+        for paths, images in dataloader:
+            if torch.cuda.is_available():
+                images = images.cuda()
             
-            dataset = ImageDataset(self.image_files, transform=self.preprocess)
-            
-            dataloader = DataLoader(dataset,
-                                    batch_size=32,
-                                    num_workers=4,
-                                    pin_memory=True if torch.cuda.is_available() else False)
-            
-            pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
-            
-            for paths, images in dataloader:
-                if torch.cuda.is_available():
-                    images = images.cuda()
-                
-                with torch.no_grad():
-                    self.model.eval()
-                    features_batch = self.model.extract_features(images)
+            with torch.no_grad():
+                self.model.eval()
+                features_batch = self.model.extract_features(images)
 
-                    out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).cpu().numpy()
+                out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).cpu().numpy()
 
-                for path,out_feature in zip(paths,out_features_batch ):
-                    yield (path,out_feature)
+            for path,out_feature in zip(paths,out_features_batch ):
+                if path not in processed_files: 
+                    new_feature_pair=(path,out_feature)
+                    features.append(new_feature_pair)
 
-                pbar.update(images.shape[0])
+                    yield new_feature_pair
 
-            pbar.close()
+            pbar.update(images.shape[0])
 
+            # Save intermediate results
+            if len(features) % checkpoint_interval == 0:
+                with open(self.checkpoint_file, 'wb') as f:
+                    pickle.dump(features, f)
+
+        pbar.close()
+       
     def search_similar_images(self,target_image_path,topN=10):
         
           # Extract feature from target image
