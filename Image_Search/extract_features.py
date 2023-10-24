@@ -5,7 +5,7 @@ import os
 def main():
     # Initialize the model.
     # similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos", "check1.pkl")
-    similar_model1 = models.Image_Search_Model("C:\\Users\\DGU_ICE\\AI_Trademark_IMG","ckeck2.pkl")
+    similar_model1 = models.Image_Search_Model("C:\\Users\\DGU_ICE\\AI_Trademark_IMG","check2.pkl")
 
     # # Extract features from all images.
     combined_features = []
