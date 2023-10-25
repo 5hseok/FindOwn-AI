@@ -29,3 +29,21 @@ def main():
 
 if __name__ == '__main__':
     main()
+# import pickle
+
+# # 초기 빈 리스트 생성
+# merged_features = []
+
+# # 각 체크포인트 파일을 순회
+# for i in range(13):  # 0부터 12까지
+#     with open(f'features_checkpoint_{i}.pkl', 'rb') as f:
+#         features = pickle.load(f)
+#         # 현재 체크포인트의 피처들을 병합 리스트에 추가
+#         merged_features.extend(features)
+
+# # 모든 피처들을 담은 하나의 pickle 파일로 저장
+# with open('check2.pkl', 'wb') as f:
+#     pickle.dump(merged_features, f)
+# with open('check2.pkl', 'rb') as f:
+#     features1 = pickle.load(f)
+# print(len(features1))
