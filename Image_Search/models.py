@@ -38,7 +38,7 @@ class ImageDataset(Dataset):
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, root_dir, checkpoint_file,model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
+    def __init__(self, root_dir, checkpoint_file=None,model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
         self.return_nodes = return_nodes
         self.checkpoint_file = checkpoint_file
