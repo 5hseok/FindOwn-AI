@@ -89,14 +89,14 @@ class Image_Search_Model:
     def extract_features(self):
         checkpoint_interval = 640  # Save every 1,000 images.
         batch_num = 0
-
+        features = []
+        processed_files = set()
         # Load from checkpoint if it exists
         if os.path.isfile(self.checkpoint_file):
             with open(self.checkpoint_file, 'rb') as f:
                 features = pickle.load(f)
                 print(f"Loaded {len(features)} features from checkpoint")
-
-        processed_files = {path for path, _ in features}
+            processed_files = {path for path, _ in features}
 
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
 
