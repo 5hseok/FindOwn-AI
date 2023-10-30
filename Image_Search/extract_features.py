@@ -5,7 +5,7 @@ import os
 def main():
     # Initialize the model.
     # similar_model = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos", "check1.pkl")
-    similar_model1 = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\Image_Search\\ImageDB\\Logos")
+    similar_model1 = models.Image_Search_Model("C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos")
 
     # # Extract features from all images.
     combined_features = []
@@ -22,6 +22,9 @@ def main():
     Trademark_pkl = similar_model1.extract_features()
     with open('features_logo.pkl','wb') as f:
         pickle.dump(list(Trademark_pkl),f)      
+    with open('features_logo.pkl','rb') as f:
+        load = pickle.load(f)
+    print(len(load))
     # 두 pkl 파일의 데이터를 불러와 combined에 저장하고 pkl로 만들기
     # Save the features to a file.
     # with open('features.pkl', 'wb') as f:

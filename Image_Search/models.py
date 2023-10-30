@@ -38,10 +38,9 @@ class ImageDataset(Dataset):
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, root_dir, checkpoint_file=None,model_name='efficientnet-b7', return_nodes={'avgpool':'avgpool'}, pre_extracted_features=None):
+    def __init__(self, root_dir, model_name='efficientnet-b7', pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
-        self.return_nodes = return_nodes
-        self.checkpoint_file = checkpoint_file
+
         if torch.cuda.is_available():
             self.model = self.model.cuda()
 
@@ -87,16 +86,7 @@ class Image_Search_Model:
 
 
     def extract_features(self):
-        checkpoint_interval = 640  # Save every 1,000 images.
-        batch_num = 0
         features = []
-        processed_files = set()
-        # Load from checkpoint if it exists
-        if os.path.isfile(self.checkpoint_file):
-            with open(self.checkpoint_file, 'rb') as f:
-                features = pickle.load(f)
-                print(f"Loaded {len(features)} features from checkpoint")
-            processed_files = {path for path, _ in features}
 
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
 
@@ -105,7 +95,7 @@ class Image_Search_Model:
                                 num_workers=4,
                                 pin_memory=True if torch.cuda.is_available() else False)
 
-        pbar = tqdm(total=len(self.image_files), initial=len(processed_files), desc="Extracting Features")
+        pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
 
         for paths, images in dataloader:
             if torch.cuda.is_available():
@@ -117,22 +107,13 @@ class Image_Search_Model:
                 out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).cpu().numpy()
 
             for path,out_feature in zip(paths,out_features_batch ):
-                if path not in processed_files: 
-                    new_feature_pair=(path,out_feature)
-                    features.append(new_feature_pair)
+                new_feature_pair=(path,out_feature)
+                features.append(new_feature_pair)
 
-                    yield new_feature_pair
+                yield new_feature_pair
 
             pbar.update(images.shape[0])
-
-            # Save intermediate results to separate files at intervals
-            if batch_num % checkpoint_interval == 0:
-                with open(f'features_checkpoint_{batch_num // checkpoint_interval}.pkl', 'wb') as f:
-                    pickle.dump(features, f)
-                features.clear()   # Clear the list to save memory
-            
-            batch_num += 1
-
+        
         pbar.close()
        
     def search_similar_images(self,target_image_path,topN=10):
