@@ -1,6 +1,8 @@
 import os
-from PIL import Image
+from PIL import Image, ImageFile
 import torch
+import requests
+from io import BytesIO
 from efficientnet_pytorch import EfficientNet
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from numpy import dot
@@ -20,6 +22,8 @@ from torchvision.transforms.functional import to_tensor
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 class ImageDataset(Dataset):
     def __init__(self, image_files, transform=None):
         self.image_files = image_files
@@ -30,15 +34,21 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         img_path = self.image_files[idx]
-        img = Image.open(img_path).convert('RGB')
-        
-        if self.transform:
-            img = self.transform(img)
-        
+
+        try:
+            # Try to open the image file and convert to RGB
+            img = Image.open(img_path).convert('RGB')
+
+            if self.transform:
+                img = self.transform(img)
+        except Exception as e:
+            print(f"Error occurred when loading image file {img_path}: {e}")
+            return None
+
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, root_dir, model_name='efficientnet-b7', pre_extracted_features=None):
+    def __init__(self, root_dir=None, model_name='efficientnet-b7', pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
 
         if torch.cuda.is_available():
@@ -55,7 +65,7 @@ class Image_Search_Model:
         self.image_files = [os.path.join(dirpath, f)
                             for dirpath, dirnames, files in os.walk(root_dir)
                             for f in files if f.endswith('.jpg') or f.endswith('.png')]
-        
+        print(len(self.image_files))
         # Load pre-extracted features if provided.
         if pre_extracted_features is not None:
             print(f"Loading features from {pre_extracted_features}")
@@ -96,12 +106,9 @@ class Image_Search_Model:
                                 pin_memory=True if torch.cuda.is_available() else False)
 
         pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
-
         for paths, images in dataloader:
             if torch.cuda.is_available():
                 images = images.cuda()
-
-            with torch.no_grad():
                 self.model.eval()
                 features_batch = self.model.extract_features(images)
                 out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).cpu().numpy()
