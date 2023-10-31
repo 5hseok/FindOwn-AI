@@ -3,6 +3,7 @@ from PIL import Image, ImageFile
 import torch
 import requests
 from io import BytesIO
+import urllib
 from efficientnet_pytorch import EfficientNet
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from numpy import dot
@@ -48,7 +49,7 @@ class ImageDataset(Dataset):
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, root_dir=None, model_name='efficientnet-b7', pre_extracted_features=None):
+    def __init__(self, model_name='efficientnet-b7', pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
 
         if torch.cuda.is_available():
@@ -61,11 +62,6 @@ class Image_Search_Model:
             Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
         ])
 
-        # Load image files from the root directory 
-        self.image_files = [os.path.join(dirpath, f)
-                            for dirpath, dirnames, files in os.walk(root_dir)
-                            for f in files if f.endswith('.jpg') or f.endswith('.png')]
-        print(len(self.image_files))
         # Load pre-extracted features if provided.
         if pre_extracted_features is not None:
             print(f"Loading features from {pre_extracted_features}")
@@ -95,9 +91,13 @@ class Image_Search_Model:
         return out_features[0]
 
 
-    def extract_features(self):
+    def extract_features(self,root_dir):
         features = []
-
+        # Load image files from the root directory 
+        self.image_files = [os.path.join(dirpath, f)
+                            for dirpath, dirnames, files in os.walk(root_dir)
+                            for f in files if f.endswith('.jpg') or f.endswith('.png')]
+        print(len(self.image_files))
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
 
         dataloader = DataLoader(dataset,
@@ -122,23 +122,31 @@ class Image_Search_Model:
             pbar.update(images.shape[0])
         
         pbar.close()
-       
-    def search_similar_images(self,target_image_path,topN=10):
-        
-          # Extract feature from target image
-            target_embedding=self.predict(target_image_path)
-         
-            if target_embedding is not None and hasattr(self,"features"):
-                distances=[]
-             
-                for feature in self.features:
-                    distance=torch.nn.functional.cosine_similarity(torch.tensor(target_embedding),torch.tensor(feature),dim=0)
-                    distances.append(distance.item())
-             
-                indices=np.argsort(distances)[::-1][:topN]
-             
-                return [(self.image_files[i],distances[i]) for i in indices]
 
+    def search_similar_images(self, target_image_path, topN=10):
+        # Check if target_image_path is a URL
+        if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
+            # If target_image_path is a URL, download the image and convert it to a PIL image
+            response = requests.get(target_image_path)
+            target_image = Image.open(BytesIO(response.content))
+        else:
+            # If target_image_path is not a URL, assume it is a file path
+            target_image = Image.open(target_image_path)
+
+        # Extract feature from target image
+        target_embedding = self.predict(target_image)
+
+        if target_embedding is not None and hasattr(self, "features"):
+            distances = []
+
+            for feature in self.features:
+                feature_path, feature_vector = feature
+                distance = torch.nn.functional.cosine_similarity(torch.tensor(target_embedding), torch.tensor(feature_vector), dim=0)
+                distances.append(distance.item())
+
+            indices = np.argsort(distances)[::-1][:topN]
+
+            return [(self.features[i], distances[i]) for i in indices]
 
 class Image_Object_Detections:
     def __init__(self,topN=10):
@@ -212,7 +220,7 @@ class Image_Object_Detections:
         
         image_object_counts = []
 
-        for image_path_in_list, precision in topN_image_list:
+        for (image_path_in_list, feature_vector), precision in topN_image_list:
             topN_object = self.detect_objects(image_path_in_list, search_score)
             common_objects = list(target_object & topN_object)
             image_object_counts.append((image_path_in_list, common_objects, len(common_objects)))
