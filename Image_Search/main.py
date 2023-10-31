@@ -8,15 +8,9 @@ class ImageSearchRequest(BaseModel):
     top10_image_list: list[str]
 
 app = FastAPI()
-
-# Load the features from a file.
-with open('features.pkl', 'rb') as f:
-    features = pickle.load(f)
-
 # Initialize the models.
-root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos\\000001_07cbc019bcf34352bf73e821ae50340a.jpg"
-similar_model = models.Image_Search_Model(root_dir, pre_extracted_features='features.pkl')
+similar_model = models.Image_Search_Model(pre_extracted_features='features_logo.pkl')
 top_10_image_list = similar_model.search_similar_images(target_image_path)
 print(top_10_image_list)
 Object_model  = models.Image_Object_Detections()
@@ -30,23 +24,3 @@ async def search_images(request: ImageSearchRequest):
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-# # Testclint 사용한 테스트 코드
-# from fastapi.testclient import TestClient
-
-# # Initialize the test client
-# client = TestClient(app)
-
-# # Define the test data
-# test_data = {
-#     "target_image_path": "path/to/your/target/image.jpg",
-#     "top10_image_list": ["path/to/image1.jpg", "path/to/image2.jpg", ...]  # replace with actual image paths
-# }
-
-# # Send a POST request to the /search_images endpoint with the test data
-# response = client.post("/search_images", json=test_data)
-
-# # Print the response status code and body
-# print(response.status_code)
-# print(response.json())
