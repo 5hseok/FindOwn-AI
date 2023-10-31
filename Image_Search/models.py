@@ -22,6 +22,7 @@ import torch.nn.functional as F
 from torchvision.transforms.functional import to_tensor
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
+import cv2
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -69,9 +70,9 @@ class Image_Search_Model:
                 self.features=pickle.load(f)
             print(f"Loaded {len(self.features)} features")
             
-    def predict(self, image_path):
+    def predict(self, img):
         # Load the image
-        img = Image.open(image_path).convert('RGB')
+        # img = Image.open(image_path).convert('RGB')
 
         # Preprocess the image
         img_tensor = self.preprocess(img)
@@ -89,7 +90,6 @@ class Image_Search_Model:
             out_features = F.adaptive_avg_pool2d(features, 1).reshape(features.shape[0], -1).cpu().numpy()
 
         return out_features[0]
-
 
     def extract_features(self,root_dir):
         features = []
@@ -122,17 +122,36 @@ class Image_Search_Model:
             pbar.update(images.shape[0])
         
         pbar.close()
+        
+    def remove_duplicated_images(self, image_list, topN, error_rate=0.05):
+        # Sort image list by similarity score
+        sorted_list = sorted(image_list, key=lambda x: x[1], reverse=True)
+        
+        # Initialize the result list with the first image
+        result_list = [sorted_list[0]]
+        
+        for i in range(1, len(sorted_list)):
+            # If the similarity score difference is within the error rate, skip this image
+            if abs(result_list[-1][1] - sorted_list[i][1]) / result_list[-1][1] < error_rate:
+                continue
+            # Otherwise, add this image to the result list
+            result_list.append(sorted_list[i])
+            # If the length of the result list is equal to topN, break the loop
+            if len(result_list) == topN:
+                break
+
+        return result_list
 
     def search_similar_images(self, target_image_path, topN=10):
-        # Check if target_image_path is a URL
+            # Check if target_image_path is a URL
         if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
             # If target_image_path is a URL, download the image and convert it to a PIL image
             response = requests.get(target_image_path)
-            target_image = Image.open(BytesIO(response.content))
+            target_image = Image.open(BytesIO(response.content)).convert('RGB')
         else:
             # If target_image_path is not a URL, assume it is a file path
-            target_image = Image.open(target_image_path)
-
+            target_image = Image.open(target_image_path).convert('RGB')
+        
         # Extract feature from target image
         target_embedding = self.predict(target_image)
 
@@ -142,11 +161,12 @@ class Image_Search_Model:
             for feature in self.features:
                 feature_path, feature_vector = feature
                 distance = torch.nn.functional.cosine_similarity(torch.tensor(target_embedding), torch.tensor(feature_vector), dim=0)
-                distances.append(distance.item())
+                distances.append((feature_path, distance.item()))
 
-            indices = np.argsort(distances)[::-1][:topN]
+            topN_image_list = self.remove_duplicated_images(distances, topN)
 
-            return [(self.features[i], distances[i]) for i in indices]
+            return topN_image_list
+
 
 class Image_Object_Detections:
     def __init__(self,topN=10):
@@ -214,13 +234,13 @@ class Image_Object_Detections:
         plt.imshow(image)
         plt.axis('off')  # Don't show axis
 
-    def search_similar_images(self,target_image_path,topN_image_list, search_score = 0.05):
+    def search_similar_images(self,target_image_path,topN_image_list, search_score = 0.10):
         
         target_object=self.detect_objects(target_image_path,search_score)
         
         image_object_counts = []
 
-        for (image_path_in_list, feature_vector), precision in topN_image_list:
+        for (image_path_in_list, precision) in topN_image_list:
             topN_object = self.detect_objects(image_path_in_list, search_score)
             common_objects = list(target_object & topN_object)
             image_object_counts.append((image_path_in_list, common_objects, len(common_objects)))
@@ -248,46 +268,46 @@ class Image_Object_Detections:
         plt.title(titles[-1])
         
         plt.tight_layout() 
-        
+        plt.show()
         return top3_images
                     
-    def search_similar_images_test(self,target_image_path,topN_image_list, search_score = 0.05):
-        # 이미지에 객체를 잘 탐지했나 이미지로 출력해줌.
-        # 각 이미지의 공통 객체를 출력하고, 가장 많이 발생하는 3개의 객체를 출력함.
-        # object_detection의 정확성을 알아보기 위한 코드.
-        
-        target_object=self.detect_objects(target_image_path, search_score)
-        
-        topN_object=[]
-        
-        for image_path, precision in topN_image_list:
-            topN_object.append(self.detect_objects(image_path, search_score))
-            
-        count=0
+class ColorSimilarityModel:
+    def __init__(self, num_bins=30):
+        self.num_bins = num_bins
 
-        counter=Counter()
-        
-        # Create a figure with multiple subplots
-        fig=plt.figure(figsize=(20,20))
-        
-        for i in range(len(topN_object)):
-            object_list=list(target_object & topN_object[i])
-            if len(object_list)>0:
-                print(topN_image_list[i])
-                print("And object is",object_list)
-                counter.update(object_list)
-                                
-                # Visualize detections on the current image
-                self.visualize_detections(topN_image_list[i], object_list, search_score)
-                
-            else:
-                count+=1
-    
-        most_common_elements=counter.most_common(3)
+    def calculate_histogram(self, img_path):
+        img = cv2.imread(img_path)
+        hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        hist = cv2.calcHist([hsv_img], [0], None, [self.num_bins], [0, 180])
+        cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        return hist
 
-        print(most_common_elements)
-        
-        if len(target_object)==count:
-            print("No")
-        
-        plt.show()
+    def save_histograms(self, root_dir, save_path):
+        histograms = {}
+
+        for filename in os.listdir(root_dir):
+            if filename.endswith(('.jpg', '.png', '.jpeg')):  # 이미지 파일만 처리
+                img_path = os.path.join(root_dir, filename)
+                hist = self.calculate_histogram(img_path)
+                histograms[filename] = hist
+
+        with open(save_path, 'wb') as f:
+            pickle.dump(histograms, f)
+
+    def load_histograms(self, load_path):
+        with open(load_path, 'rb') as f:
+            histograms = pickle.load(f)
+        return histograms
+
+    def compare_histograms(self, hist1, hist2):
+        return cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+
+    def predict(self, target_image_path, histograms):
+        target_hist = self.calculate_histogram(target_image_path)
+        similarities = []
+
+        for filename, hist in histograms.items():
+            similarity = self.compare_histograms(target_hist, hist)
+            similarities.append((filename, similarity))
+
+        return similarities
