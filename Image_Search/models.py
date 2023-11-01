@@ -211,7 +211,14 @@ class Image_Object_Detections:
                 return item['display_name']
             
     def detect_objects(self, image_path, search_score):
-        image = Image.open(image_path).convert("RGB")
+        if image_path.startswith('http://') or image_path.startswith('https://'):
+            # If target_image_path is a URL, download the image and convert it to a PIL image
+            response = requests.get(image_path)
+            target_image = Image.open(BytesIO(response.content)).convert('RGB')
+        else:
+            # If target_image_path is not a URL, assume it is a file path
+            target_image = Image.open(image_path).convert('RGB')
+        image = target_image
         image_tensor = to_tensor(image).unsqueeze(0)
 
         if torch.cuda.is_available():
@@ -230,7 +237,14 @@ class Image_Object_Detections:
 
     def visualize_image(self, image_path):
         """Just display the original image without any annotations."""
-        image = Image.open(image_path)
+        if image_path.startswith('http://') or image_path.startswith('https://'):
+            # If target_image_path is a URL, download the image and convert it to a PIL image
+            response = requests.get(image_path)
+            target_image = Image.open(BytesIO(response.content)).convert('RGB')
+        else:
+            # If target_image_path is not a URL, assume it is a file path
+            target_image = Image.open(image_path).convert('RGB')
+        image = target_image
         plt.imshow(image)
         plt.axis('off')  # Don't show axis
 
@@ -272,16 +286,48 @@ class Image_Object_Detections:
         return top3_images
                     
 class ColorSimilarityModel:
-    def __init__(self, num_bins=30):
+    def __init__(self, num_bins=30, resize_shape = (256,256)):
         self.num_bins = num_bins
+        self.resize_shape = resize_shape
 
     def calculate_histogram(self, img_path):
-        img = cv2.imread(img_path)
-        hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        hist = cv2.calcHist([hsv_img], [0], None, [self.num_bins], [0, 180])
-        cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        if img_path.startswith('http://') or img_path.startswith('https://'):
+            # If target_image_path is a URL, download the image and convert it to a PIL image
+            response = requests.get(img_path)
+            target_image = Image.open(BytesIO(response.content)).convert('RGB')
+        else:
+            # If target_image_path is not a URL, assume it is a file path
+            target_image = Image.open(img_path).convert('RGB')
+        img = target_image
+        if img is None:
+            print(f"Cannot read image file: {img_path}")
+            return None
+        img_np = np.array(img)  # Convert the image to numpy array
+        img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)  # Convert the image to OpenCV BGR format
+        img_cv = cv2.resize(img_cv, self.resize_shape)  # resize image
+        hsv_img = cv2.cvtColor(img_cv, cv2.COLOR_BGR2HSV)
+        hist = cv2.calcHist([hsv_img], [0, 1, 2], None, [self.num_bins]*3, [0, 180, 0, 256, 0, 256])
+        cv2.normalize(hist, hist)
+        hist = hist.flatten().astype('float32') # convert
+        if len(hist) < self.num_bins**3:
+            hist = np.concatenate([hist, np.zeros(self.num_bins**3 - len(hist))])
+    
         return hist
+    @staticmethod
+    def calculate_histogram_cross_entropy(hist1, hist2):
+        # Normalize the histograms.
+        hist1 = hist1 / np.sum(hist1)
+        hist2 = hist2 / np.sum(hist2)
 
+        # Clip small values to avoid division by zero.
+        hist1 = np.clip(hist1, a_min=1e-10, a_max=1.0)
+        hist2 = np.clip(hist2, a_min=1e-10, a_max=1.0)
+
+        # Calculate the cross-entropy.
+        cross_entropy = -np.sum(hist1 * np.log(hist2))
+
+        return cross_entropy
+    
     def save_histograms(self, root_dir, save_path):
         histograms = {}
 
@@ -300,7 +346,7 @@ class ColorSimilarityModel:
         return histograms
 
     def compare_histograms(self, hist1, hist2):
-        return cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+        return self.calculate_histogram_cross_entropy(hist1, hist2)
 
     def predict(self, target_image_path, histograms):
         target_hist = self.calculate_histogram(target_image_path)
@@ -309,5 +355,5 @@ class ColorSimilarityModel:
         for filename, hist in histograms.items():
             similarity = self.compare_histograms(target_hist, hist)
             similarities.append((filename, similarity))
-
-        return similarities
+        sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
+        return sorted_similarities
