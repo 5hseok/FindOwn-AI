@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 import models
 import cv2
+import pickle
 import matplotlib.pyplot as plt
 from PIL import Image
 # class ImageSearchRequest(BaseModel):
@@ -10,12 +11,19 @@ from PIL import Image
 # app = FastAPI()
 # Initialize the models.
 target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\KakaoTalk_20230216_133749847.png"
+#Test image
 target_image_path = "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
-similar_results = []
+similar_results = {}
 
+with open('features_logo.pkl','rb') as f:
+    load = pickle.load(f)
+for image_path, array in load:
+    similar_results.update({image_path:0})
 similar_model = models.Image_Search_Model(pre_extracted_features='features_logo.pkl')
 top_10_image_list = similar_model.search_similar_images(target_image_path)
-print(top_10_image_list)
+for image_path, accuracy in top_10_image_list:
+    similar_results[image_path] = accuracy
+print(similar_results)
 # for similar_accuracy in top_10_image_list:
 #     similar_results.append(similar_accuracy * 0.6)
     
@@ -62,6 +70,8 @@ for i, (img_path, _ ,sim) in enumerate(result):
 
 plt.tight_layout()    # 플롯 간격 조절
 plt.show() 
+
+
 
 # @app.post("/search_images")
 # async def search_images(request: ImageSearchRequest):
