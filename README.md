@@ -1,7 +1,6 @@
 # FindOwn-AI
 ### extract_features.py
-ImageDB에서 이미지들을 미리 특징 추출하여 pkl로 바꾸는 작업을 위한 코드
-실제 사용에서는 필요 x
+ImageDB에서 이미지들을 미리 특징 추출하여 pkl로 바꾸는 작업을 위한 코드. ImageDB를 다운 받았다면, 
 ### models.py
 실질적인 AI 모델을 class 2~3개로 정의. pretrained 모델을 사용한터라 import만 잘 시켜주면 init에서 모델 설정 끝
 메소드를 통해 유사도 판단 결과 반환
@@ -24,3 +23,12 @@ object_model에서 필요한 pbtxt파일. 어떤 객체를 탐지했는지를 �
 이미지 유사도 모델에서 불러와야 하는 모델인데 없어도 되나? 싶다. 확인 필요
 ### Image_Search_TotalImage.ipynb
 사용 x 
+
+### 점수 판별 방식
+초기 단계 : pkl에서 data를 불러올 때, 이미지 경로별로 튜플을 생성하여 점수를 저장한다. 
+
+### 레포 사용 순서
+1. ImageDB\\Logos에 있는 이미지 파일과 pbtxt파일, EfficientNet 등을 내려 받는다.
+2. requirement.txt에 있는 lib들을 설치한다.
+3. extract_features.py 파일에 root_dir을 내려받은 폴더의 주소로 설정 후, pkl을 만든다.
+4. pkl 파일이 2개 만들어졌다면, main.py 파일 사용 가능
