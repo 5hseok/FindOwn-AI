@@ -3,12 +3,12 @@ import pickle
 import os
 
 def main():
-    root_dir = "C:\\Users\\DGU_ICE\\AI_Trademark_IMG"
+    root_dir = "변환하고자 하는 이미지들이 있는 폴더로 지정 ex) C:\\user\\sam\\image "
     similar_model1 = models.Image_Search_Model(root_dir)
     Trademark_pkl = similar_model1.extract_features()
-    with open('features_Trademark.pkl','wb') as f:
+    with open('features_logo.pkl','wb') as f:
         pickle.dump(list(Trademark_pkl),f)      
-    with open('features_Trademark.pkl','rb') as f:
+    with open('features_logo.pkl','rb') as f:
         load = pickle.load(f)
     print(len(load))
 
