@@ -11,6 +11,9 @@ def main():
     with open('features_logo.pkl','rb') as f:
         load = pickle.load(f)
     print(len(load))
-
+    
+    #color model
+    color_model = models.ColorSimilarityModel()
+    color_model.save_histograms(root_dir,'colorHistograms_logo.pkl')
 if __name__ == '__main__':
     main()
