@@ -32,7 +32,6 @@ plt.tight_layout()    # 플롯 간격 조절
 plt.show()   
     
 color_model = models.ColorSimilarityModel()
-color_model.save_histograms('C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos', 'colorHistograms_logo.pkl')
 histograms = color_model.load_histograms('colorHistograms_logo.pkl')
 similarities = color_model.predict(target_image_path, histograms)
 top_10_images = similarities[:10]
