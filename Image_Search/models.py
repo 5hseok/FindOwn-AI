@@ -3,19 +3,12 @@ from PIL import Image, ImageFile
 import torch
 import requests
 from io import BytesIO
-import urllib
 from efficientnet_pytorch import EfficientNet
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
-from numpy import dot
-from numpy.linalg import norm
-import torch
 from torchvision.models.detection.retinanet import RetinaNet_ResNet50_FPN_Weights
 from torchvision.transforms import functional as F
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from collections import Counter
 import numpy as np
-from multiprocessing import Pool 
 import pickle 
 import torchvision.models as models
 import torch.nn.functional as F
@@ -23,6 +16,9 @@ from torchvision.transforms.functional import to_tensor
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import cv2
+import torchvision.transforms as transforms
+from torchvision.models import resnet50
+from torch import nn
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -247,17 +243,34 @@ class Image_Object_Detections:
         image = target_image
         plt.imshow(image)
         plt.axis('off')  # Don't show axis
+    def create_object_detection_pkl(self, root_dir, output_file, search_score=0.10):
+        # 모든 이미지 파일에 대한 object detection 결과를 저장할 딕셔너리
+        detection_dict = {}
 
-    def search_similar_images(self,target_image_path,topN_image_list, search_score = 0.10):
-        
-        target_object=self.detect_objects(target_image_path,search_score)
-        
+        # root_dir에서 모든 이미지 파일에 대해 object detection 수행
+        for dirpath, dirnames, filenames in os.walk(root_dir):
+            for filename in filenames:
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    image_path = os.path.join(dirpath, filename)
+                    detected_objects = self.detect_objects(image_path, search_score)
+                    
+                    # 이미지 경로를 key로, object detection 결과를 value로 하는 항목 추가
+                    detection_dict[image_path] = detected_objects
+
+        # 딕셔너리를 pkl 파일로 저장
+        with open(output_file, 'wb') as f:
+            pickle.dump(detection_dict, f)
+
+        print(f"Object detection results saved to {output_file}.")
+
+    def search_similar_images(self, target_image_path, detection_dict, search_score=0.10):
+        target_object = self.detect_objects(target_image_path, search_score)
+
         image_object_counts = []
 
-        for image_path_in_list in topN_image_list:
-            topN_object = self.detect_objects(image_path_in_list, search_score)
-            common_objects = list(target_object & topN_object)
-            image_object_counts.append((image_path_in_list, common_objects, len(common_objects)))
+        for image_path_in_dict, detected_objects_in_dict in detection_dict.items():
+            common_objects = list(target_object & detected_objects_in_dict)
+            image_object_counts.append((image_path_in_dict, common_objects, len(common_objects)))
 
         # Sort images by the number of common objects in descending order and select top 3
         result_images = sorted(image_object_counts, key=lambda x: x[2], reverse=True)
@@ -336,3 +349,71 @@ class ColorSimilarityModel:
             similarities.append((filename, similarity))
         sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
         return sorted_similarities
+
+class CNNModel:
+    def __init__(self):
+        self.model = resnet50(pretrained=True)
+        self.model = nn.Sequential(*list(self.model.children())[:-1])
+        
+        if torch.cuda.is_available():
+            self.model = self.model.cuda()
+
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        ])
+
+    def extract_feature(self, image_path):
+        if image_path.startswith('http://') or image_path.startswith('https://'):
+            # If target_image_path is a URL, download the image and convert it to a PIL image
+            response = requests.get(image_path)
+            image = Image.open(BytesIO(response.content)).convert('RGB')
+        else:
+            # If target_image_path is not a URL, assume it is a file path
+            image = Image.open(image_path).convert('RGB')
+        
+        image = self.transform(image)
+        image = image.unsqueeze(0)
+
+        if torch.cuda.is_available():
+            image = image.cuda()
+
+        feature = self.model(image)
+        return feature.cpu().data.numpy().flatten()  # 1차원 배열로 변환
+
+    def extract_features_from_dir(self, root_dir, save_path):
+        features = {}
+        for filename in os.listdir(root_dir):
+            if filename.endswith(".jpg") or filename.endswith(".png"):
+                image_path = os.path.join(root_dir, filename)
+                feature = self.extract_feature(image_path)
+                features[filename] = feature
+
+        with open(save_path, 'wb') as f:
+            pickle.dump(features, f)
+
+    def cosine_similarity(self, a, b):  # self 매개변수 추가
+        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+    def compare_features(self, target_image_path, features_path):
+        if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
+            # If target_image_path is a URL, download the image and convert it to a PIL image
+            response = requests.get(target_image_path)
+            target_image = Image.open(BytesIO(response.content)).convert('RGB')
+        else:
+            # If target_image_path is not a URL, assume it is a file path
+            target_image = Image.open(target_image_path).convert('RGB')
+        target_feature = self.extract_feature(target_image_path)
+
+        with open(features_path, 'rb') as f:
+            features = pickle.load(f)
+
+        similarities = {}
+        for key, value in features.items():
+            if value.ndim > 1:  # value가 1차원이 아니라면
+                value = value.flatten()  # 1차원으로 변환
+            similarities[key] = self.cosine_similarity(target_feature, value)
+        similarities = sorted(similarities.items(),key=lambda x: x[1], reverse=True)
+        return similarities
