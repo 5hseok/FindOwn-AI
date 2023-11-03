@@ -2,11 +2,11 @@ from Test import CNNModel
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-cnn = CNNModel()
 root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\image-05.png"
 compare_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\KakaoTalk_20230216_133749847.png"
 
+cnn = CNNModel()
 cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features.pkl')
 
 print(cnn_similarities[:10])
