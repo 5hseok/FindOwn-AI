@@ -1,8 +1,6 @@
 from Test import CNNModel
 import matplotlib.pyplot as plt
-from PIL import Image
 import matplotlib.image as mpimg
-import numpy as np
 
 cnn = CNNModel()
 root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
