@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 import models
 import cv2
+import os
 import pickle
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -40,11 +41,13 @@ plt.tight_layout()    # 플롯 간격 조절
 plt.show()   
     
 color_model = models.ColorSimilarityModel()
+if not os.path.exists('colorHistograms_logo.pkl'):
+    color_model.save_histograms(root_dir,'colorHistograms_logo.pkl')
 histograms = color_model.load_histograms('colorHistograms_logo.pkl')
 similarities = color_model.predict(target_image_path, histograms)
 top_10_images = similarities[:10]
 print(top_10_images)
-# for color_similarity in top_10_images:
+
     
 plt.figure(figsize=(20, 20))   # 플롯 크기 설정
 for i, (img_path, sim) in enumerate(top_10_images):
