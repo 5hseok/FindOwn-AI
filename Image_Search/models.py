@@ -254,36 +254,15 @@ class Image_Object_Detections:
         
         image_object_counts = []
 
-        for (image_path_in_list, precision) in topN_image_list:
+        for image_path_in_list in topN_image_list:
             topN_object = self.detect_objects(image_path_in_list, search_score)
             common_objects = list(target_object & topN_object)
             image_object_counts.append((image_path_in_list, common_objects, len(common_objects)))
 
         # Sort images by the number of common objects in descending order and select top 3
-        top3_images = sorted(image_object_counts, key=lambda x: x[2], reverse=True)[:3]
+        result_images = sorted(image_object_counts, key=lambda x: x[2], reverse=True)
 
-        titles = ["Top 1", "Top 2", "Top 3", "Target Image"]
-
-        fig=plt.figure(figsize=(20,20))
-        
-        for i in range(len(top3_images)):
-            plt.subplot(2 ,2 , i+1) 
-            image_path,_ ,_ = top3_images[i]
-            
-            self.visualize_image(image_path) 
-            
-            plt.title(titles[i])
-        
-        # Show target image at last position
-        plt.subplot(2 ,2 ,4) 
-        
-        self.visualize_image(target_image_path) 
-
-        plt.title(titles[-1])
-        
-        plt.tight_layout() 
-        plt.show()
-        return top3_images
+        return result_images
                     
 class ColorSimilarityModel:
     def __init__(self, num_bins=30, resize_shape = (256,256)):
@@ -335,7 +314,7 @@ class ColorSimilarityModel:
             if filename.endswith(('.jpg', '.png', '.jpeg')):  # 이미지 파일만 처리
                 img_path = os.path.join(root_dir, filename)
                 hist = self.calculate_histogram(img_path)
-                histograms[filename] = hist
+                histograms[img_path] = hist
 
         with open(save_path, 'wb') as f:
             pickle.dump(histograms, f)
