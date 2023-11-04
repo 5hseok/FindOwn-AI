@@ -23,7 +23,7 @@ for image_path, array in load:
 similar_model = models.Image_Search_Model(pre_extracted_features='features_logo.pkl')
 efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
 for image_path, accuracy in efficientnet_image_list:
-    similar_results_dict[image_path] += 0.6 * accuracy
+    similar_results_dict[image_path] += 1.0 * accuracy
   
     
 color_model = models.ColorSimilarityModel()
@@ -34,7 +34,7 @@ similarities = color_model.predict(target_image_path, histograms)
 color_dicision_images = similarities
 
 for img_path, color_accuracy in color_dicision_images:
-    similar_results_dict[img_path] += 0.1 * color_accuracy
+    similar_results_dict[img_path] += 0.0 * color_accuracy
     
     
 Object_model  = models.Image_Object_Detections(len(similar_results_dict))
@@ -53,7 +53,7 @@ if not os.path.exists('cnn_features.pkl'):
 cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features.pkl')
 for img_path, cnn_accuracy in cnn_similarities:
     img_path = root_dir+'\\'+img_path
-    similar_results_dict[img_path] += 1.0 * cnn_accuracy
+    similar_results_dict[img_path] += 0.0 * cnn_accuracy
 similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
 
