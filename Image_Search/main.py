@@ -10,7 +10,12 @@ import matplotlib.image as mpimg
 # Initialize the models.
 # url을 받아오는 걸로 변경 요망
 ################################################################################################################
-target_image_path = "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
+target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
+#빽다방
+target_image_path = "https://upload.wikimedia.org/wikipedia/ko/thumb/3/33/%ED%86%A0%ED%8A%B8%EB%84%98_%ED%99%8B%EC%8A%A4%ED%8D%BC_FC_%EB%A1%9C%EA%B3%A0.svg/800px-%ED%86%A0%ED%8A%B8%EB%84%98_%ED%99%8B%EC%8A%A4%ED%8D%BC_FC_%EB%A1%9C%EA%B3%A0.svg.png"
+#토트넘
+target_image_path = "https://scontent-gmp1-1.xx.fbcdn.net/v/t39.30808-1/362637775_114168721749133_6181487638898434694_n.jpg?stp=cp0_dst-jpg_e15_p120x120_q65&_nc_cat=110&ccb=1-7&_nc_sid=5f2048&_nc_ohc=jmClhneOLzoAX8jTvls&_nc_ht=scontent-gmp1-1.xx&oh=00_AfCVJOHkeT9DFmpRTNrXp7lXqZTXkUy03MJ6U9YywHMcJg&oe=654A97FD"
+#백소정
 ################################################################################################################
 root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
@@ -56,14 +61,15 @@ for img_path, cnn_accuracy in cnn_similarities:
     similar_results_dict[img_path] += 0.0 * cnn_accuracy
 similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
-
+# 점수 min-max 정규화 시키기
+# object 모델은 겹치는 객체 수 / 타겟 이미지 객체 수로 점수 다시 내기
 #################################   Print Test Code  #########################################
 import matplotlib.image as mpimg
 import urllib.request
 import numpy as np
 from PIL import Image
 
-N = 5  # Display top N images
+N = 1  # Display top N images
 fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
 
 # Display target image
@@ -81,7 +87,7 @@ for i in range(1, N+1):
     img_path, accuracy = similar_results_dict[i-1]
     if img_path.startswith('http://') or img_path.startswith('https://'):
         with urllib.request.urlopen(img_path) as url:
-            img = Image.open(url)
+            img = Image.open(url).convert('RGB')
             img = np.array(img)
     else:
         img = mpimg.imread(img_path)
