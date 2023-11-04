@@ -138,7 +138,7 @@ class Image_Search_Model:
 
         return result_list
 
-    def search_similar_images(self, target_image_path, topN=10):
+    def search_similar_images(self, target_image_path, topN=1710):
             # Check if target_image_path is a URL
         if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
             # If target_image_path is a URL, download the image and convert it to a PIL image
@@ -165,7 +165,7 @@ class Image_Search_Model:
 
 
 class Image_Object_Detections:
-    def __init__(self,topN=10):
+    def __init__(self,topN=1710):
         self.target_object = set()
         self.topN_object = []
         for i in range(topN):
