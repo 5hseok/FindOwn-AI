@@ -305,6 +305,7 @@ class ColorSimilarityModel:
             hist = np.concatenate([hist, np.zeros(self.num_bins**3 - len(hist))])
     
         return hist
+    
     @staticmethod
     def calculate_histogram_cross_entropy(hist1, hist2):
         # Normalize the histograms.
