@@ -270,7 +270,7 @@ class Image_Object_Detections:
 
         for image_path_in_dict, detected_objects_in_dict in detection_dict.items():
             common_objects = list(target_object & detected_objects_in_dict)
-            image_object_counts.append((image_path_in_dict, common_objects, len(common_objects)))
+            image_object_counts.append((image_path_in_dict, common_objects, len(common_objects)/len(target_object)))
 
         # Sort images by the number of common objects in descending order and select top 3
         result_images = sorted(image_object_counts, key=lambda x: x[2], reverse=True)
