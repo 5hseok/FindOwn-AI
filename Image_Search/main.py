@@ -23,6 +23,13 @@ target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registrat
 root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
 similar_results_dict = {}
+
+if not os.path.exists('features_logo.pkl'):
+    similar_model = models.Image_Search_Model()
+    Trademark_pkl = similar_model.extract_features(root_dir)
+    with open('features_logo.pkl','wb') as f:
+        pickle.dump(list(Trademark_pkl),f)    
+    
 with open('features_logo.pkl','rb') as f:
     load = pickle.load(f)
 for image_path, array in load:
