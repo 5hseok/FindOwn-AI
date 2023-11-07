@@ -41,7 +41,9 @@ class ImageDataset(Dataset):
                 img = self.transform(img)
         except Exception as e:
             print(f"Error occurred when loading image file {img_path}: {e}")
-            return None
+            # If an error occurs, move to the next image
+            idx = (idx + 1) % len(self.image_files)
+            img_path = self.image_files[idx]
 
         return img_path, img
     
@@ -95,20 +97,27 @@ class Image_Search_Model:
                             for f in files if f.endswith('.jpg') or f.endswith('.png')]
         print(len(self.image_files))
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
-
         dataloader = DataLoader(dataset,
-                                batch_size=32,
-                                num_workers=4,
+                                batch_size=16,
+                                num_workers=2,
                                 pin_memory=True if torch.cuda.is_available() else False)
 
         pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
+        torch.cuda.empty_cache()
         for paths, images in dataloader:
             if torch.cuda.is_available():
                 images = images.cuda()
+            try:
                 self.model.eval()
                 features_batch = self.model.extract_features(images)
-                out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).cpu().numpy()
-
+                if torch.cuda.is_available():
+                    out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).detach().cpu().numpy()
+                else:
+                    out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).detach().numpy()
+            except Exception as e:
+                print(f"Error: Failed to extract features. {e}")
+                return
+            
             for path,out_feature in zip(paths,out_features_batch ):
                 new_feature_pair=(path,out_feature)
                 features.append(new_feature_pair)
