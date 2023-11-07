@@ -31,4 +31,4 @@ object_model에서 필요한 pbtxt파일. 어떤 객체를 탐지했는지를 �
 1. ImageDB\\Logos에 있는 이미지 파일과 pbtxt파일, EfficientNet, features_logo.pkl 파일 등을 내려 받는다.
 2. requirement.txt에 있는 lib들을 설치한다.
 3. main.py 실행
-4. pkl 파일 오류로 실행이 안될 시 문의 주시면 pkl 파일들 보내드리겠습니다.
+4. pkl 파일 오류로 실행이 안될 시 zip 파일 다운로드 후 같은 폴더에 pkl 파일 위치시켜서 다시 실행.
