@@ -28,7 +28,7 @@ object_model에서 필요한 pbtxt파일. 어떤 객체를 탐지했는지를 �
 초기 단계 : pkl에서 data를 불러올 때, 이미지 경로별로 튜플을 생성하여 점수를 저장한다. 
 
 ### 레포 사용 순서
-1. ImageDB\\Logos에 있는 이미지 파일과 pbtxt파일, EfficientNet 등을 내려 받는다.
+1. ImageDB\\Logos에 있는 이미지 파일과 pbtxt파일, EfficientNet, features_logo.pkl 파일 등을 내려 받는다.
 2. requirement.txt에 있는 lib들을 설치한다.
-3. extract_features.py 파일에 root_dir을 내려받은 폴더의 주소로 설정 후, pkl을 만든다.
-4. pkl 파일이 2개 만들어졌다면, main.py 파일 사용 가능
+3. main.py 실행
+4. pkl 파일 오류로 실행이 안될 시 zip 파일 다운로드 후 같은 폴더에 pkl 파일 위치시켜서 다시 실행.
