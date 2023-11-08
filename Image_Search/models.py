@@ -172,7 +172,14 @@ class Image_Search_Model:
 
             return topN_image_list
 
-
+    def test(self, img_path1,img_path2):
+        img1 = Image.open(img_path1).convert('RGB')
+        img2 = Image.open(img_path2).convert('RGB')
+        img1_embedding = self.predict(img1)
+        img2_embedding = self.predict(img2)
+        distance = torch.nn.functional.cosine_similarity(torch.tensor(img1_embedding), torch.tensor(img2_embedding), dim=0)
+        print(distance)
+        
 class Image_Object_Detections:
     def __init__(self,topN=1710):
         self.target_object = set()
@@ -272,14 +279,15 @@ class Image_Object_Detections:
 
         print(f"Object detection results saved to {output_file}.")
 
-    def search_similar_images(self, target_image_path, detection_dict, search_score=0.10):
+    def search_similar_images(self, target_image_path, detection_dict, search_score=0.25):
         target_object = self.detect_objects(target_image_path, search_score)
 
         image_object_counts = []
 
         for image_path_in_dict, detected_objects_in_dict in detection_dict.items():
             common_objects = list(target_object & detected_objects_in_dict)
-            image_object_counts.append((image_path_in_dict, common_objects, len(common_objects)/len(target_object)))
+            if len(common_objects) > 0:
+                image_object_counts.append((image_path_in_dict, common_objects, len(common_objects)/len(target_object)))
 
         # Sort images by the number of common objects in descending order and select top 3
         result_images = sorted(image_object_counts, key=lambda x: x[2], reverse=True)
@@ -357,7 +365,7 @@ class ColorSimilarityModel:
         for filename, hist in histograms.items():
             similarity = self.compare_histograms(target_hist, hist)
             similarities.append((filename, similarity))
-        sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
+        sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=True)
         return sorted_similarities
 
 class CNNModel:
