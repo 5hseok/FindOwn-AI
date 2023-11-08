@@ -20,12 +20,8 @@ def min_max_normalize(scores):
 # url을 받아오는 걸로 변경 요망
 ################################################################################################################
 target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
-target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
+# target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
 #빽다방
-target_image_path = "https://upload.wikimedia.org/wikipedia/ko/thumb/3/33/%ED%86%A0%ED%8A%B8%EB%84%98_%ED%99%8B%EC%8A%A4%ED%8D%BC_FC_%EB%A1%9C%EA%B3%A0.svg/800px-%ED%86%A0%ED%8A%B8%EB%84%98_%ED%99%8B%EC%8A%A4%ED%8D%BC_FC_%EB%A1%9C%EA%B3%A0.svg.png"
-# #토트넘
-# target_image_path = "https://scontent-gmp1-1.xx.fbcdn.net/v/t39.30808-1/362637775_114168721749133_6181487638898434694_n.jpg?stp=cp0_dst-jpg_e15_p120x120_q65&_nc_cat=110&ccb=1-7&_nc_sid=5f2048&_nc_ohc=jmClhneOLzoAX8jTvls&_nc_ht=scontent-gmp1-1.xx&oh=00_AfCVJOHkeT9DFmpRTNrXp7lXqZTXkUy03MJ6U9YywHMcJg&oe=654A97FD"
-# #백소정
 ################################################################################################################
 root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
@@ -73,7 +69,7 @@ if len(result) != 0:
     object_scores = [accuracy for img_path, _, accuracy in result]
     object_scores = min_max_normalize(object_scores)
     for (img_path, _, _),score in zip(result, object_scores):
-        similar_results_dict[img_path] += 0.05 * score
+        similar_results_dict[img_path] += 0.15 * score
 
 #resnet_results
 cnn = models.CNNModel()
@@ -111,8 +107,8 @@ for i in range(1, N+1):
     img_path, accuracy = similar_results_dict[i-1]
     if img_path.startswith('http://') or img_path.startswith('https://'):
         with urllib.request.urlopen(img_path) as url:
-            img = Image.open(url).convert('RGB')
-            img = np.array(img)
+            img = Image.open(url)
+            
     else:
         img = mpimg.imread(img_path)
     ax[i].imshow(img)
@@ -126,13 +122,16 @@ plt.show()
 img1_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
 img2_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\invaild_img.png"
 
-testmodel = models.Image_Search_Model()
-testmodel.test(img1_path, img2_path)
+# testmodel = models.Image_Search_Model()
+# testmodel.test(img1_path, img2_path)
 
 ####                                Sending json to server                                ####
 
 # Create a list of dictionaries, each containing the image path and accuracy
 top_results = similar_results_dict[:N]
+
+## 점수 구현 : 최댓값 = 3.35
+
 results_list = [{"image_path": img_path, "accuracy": accuracy} for img_path, accuracy in top_results]
 
 # Convert the list to JSON
