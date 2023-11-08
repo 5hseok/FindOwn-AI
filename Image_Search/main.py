@@ -40,7 +40,7 @@ efficientnet_image_list = similar_model.search_similar_images(target_image_path,
 efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
 efficientnet_scores = min_max_normalize(efficientnet_scores)
 for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-    similar_results_dict[image_path] += 0.7 * score
+    similar_results_dict[image_path] += 0.6 * score
   
     
 color_model = models.ColorSimilarityModel()
@@ -51,7 +51,7 @@ similarities = color_model.predict(target_image_path, histograms)
 color_scores = [accuracy for img_path, accuracy in similarities]
 color_scores = min_max_normalize(color_scores)
 for (image_path, _), score in zip(similarities,color_scores):
-    similar_results_dict[image_path] += 0.0 * score
+    similar_results_dict[image_path] += 0.1 * score
 
     
     
@@ -64,7 +64,7 @@ result = Object_model.search_similar_images(target_image_path,detection_dict)
 object_scores = [accuracy for img_path, _, accuracy in result]
 object_scores = min_max_normalize(object_scores)
 for (img_path, _, _),score in zip(result, object_scores):
-    similar_results_dict[img_path] += 0.0 * score
+    similar_results_dict[img_path] += 0.1 * score
 
 
 cnn = models.CNNModel()
@@ -75,7 +75,7 @@ cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
 cnn_scores = min_max_normalize(cnn_scores)
 for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
     img_path = root_dir+'\\'+img_path
-    similar_results_dict[img_path] += 0.3 * score
+    similar_results_dict[img_path] += 0.2 * score
     
 similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
