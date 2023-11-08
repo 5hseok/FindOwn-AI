@@ -80,8 +80,6 @@ for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
     
 similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
-# 점수 min-max 정규화 시키기
-# object 모델은 겹치는 객체 수 / 타겟 이미지 객체 수로 점수 다시 내기
 #################################   Print Test Code  #########################################
 import matplotlib.image as mpimg
 import urllib.request
