@@ -19,7 +19,12 @@ import cv2
 import torchvision.transforms as transforms
 from torchvision.models import resnet50
 from torch import nn
+from torchvision.models.resnet import ResNet50_Weights
+import logging
 
+mpl_logger = logging.getLogger('matplotlib')
+mpl_logger.setLevel(logging.WARNING)
+logging.getLogger('EfficientNet').setLevel(logging.WARNING)
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class ImageDataset(Dataset):
@@ -63,10 +68,8 @@ class Image_Search_Model:
 
         # Load pre-extracted features if provided.
         if pre_extracted_features is not None:
-            print(f"Loading features from {pre_extracted_features}")
             with open(pre_extracted_features,'rb') as f:
                 self.features=pickle.load(f)
-            print(f"Loaded {len(self.features)} features")
             
     def predict(self, img):
         # Load the image
@@ -279,7 +282,7 @@ class Image_Object_Detections:
 
         print(f"Object detection results saved to {output_file}.")
 
-    def search_similar_images(self, target_image_path, detection_dict, search_score=0.25):
+    def search_similar_images(self, target_image_path, detection_dict, search_score=0.10):
         target_object = self.detect_objects(target_image_path, search_score)
 
         image_object_counts = []
@@ -365,12 +368,12 @@ class ColorSimilarityModel:
         for filename, hist in histograms.items():
             similarity = self.compare_histograms(target_hist, hist)
             similarities.append((filename, similarity))
-        sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=True)
+        sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
         return sorted_similarities
 
 class CNNModel:
     def __init__(self):
-        self.model = resnet50(pretrained=True)
+        self.model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
         self.model = nn.Sequential(*list(self.model.children())[:-1])
         
         if torch.cuda.is_available():
