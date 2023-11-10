@@ -16,12 +16,21 @@ def min_max_normalize(scores):
     if max_score == min_score:
         return [1.0 for _ in scores]
     return [(score - min_score) / (max_score - min_score) for score in scores]
+
+def normalize_score(scores_list):
+    max = 3.35
+    scores_list = [(img_path,score / max) for (img_path,score) in scores_list]
+    return scores_list
+
 # Initialize the models.
 # url을 받아오는 걸로 변경 요망
 ################################################################################################################
 target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
+#Test#
+# target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
+# target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
 # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
-#빽다방
+
 ################################################################################################################
 root_dir = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\Logos"
 #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
@@ -84,55 +93,55 @@ for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
     
 similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
-#################################   Print Test Code  #########################################
-import matplotlib.image as mpimg
-import urllib.request
-import numpy as np
-from PIL import Image
+# #################################   Print Test Code  #########################################
+# import matplotlib.image as mpimg
+# import urllib.request
+# import numpy as np
+# from PIL import Image
 
-N = 10  # Display top N images
-fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
+# N = 10  # Display top N images
+# fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
 
-# Display target image
-if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
-    with urllib.request.urlopen(target_image_path) as url:
-        img = Image.open(url)
-else:
-    img = mpimg.imread(target_image_path)
-ax[0].imshow(img)
-ax[0].set_title("Target Image")
+# # Display target image
+# if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
+#     with urllib.request.urlopen(target_image_path) as url:
+#         img = Image.open(url)
+# else:
+#     img = mpimg.imread(target_image_path)
+# ax[0].imshow(img)
+# ax[0].set_title("Target Image")
 
-# Display top N similar images
-for i in range(1, N+1):
-    img_path, accuracy = similar_results_dict[i-1]
-    if img_path.startswith('http://') or img_path.startswith('https://'):
-        with urllib.request.urlopen(img_path) as url:
-            img = Image.open(url)
+# # Display top N similar images
+# for i in range(1, N+1):
+#     img_path, accuracy = similar_results_dict[i-1]
+#     if img_path.startswith('http://') or img_path.startswith('https://'):
+#         with urllib.request.urlopen(img_path) as url:
+#             img = Image.open(url)
             
-    else:
-        img = mpimg.imread(img_path)
-    ax[i].imshow(img)
-    ax[i].set_title("Similarity: {:.8f}".format(accuracy))
+#     else:
+#         img = mpimg.imread(img_path)
+#     ax[i].imshow(img)
+#     ax[i].set_title("Similarity: {:.8f}".format(accuracy))
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
-
-#Test#
-img1_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
-img2_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\invaild_img.png"
-
-# testmodel = models.Image_Search_Model()
-# testmodel.test(img1_path, img2_path)
 
 ####                                Sending json to server                                ####
 
 # Create a list of dictionaries, each containing the image path and accuracy
-top_results = similar_results_dict[:N]
+top_results = []
+#출력할 이미지 개수 설정 
+N = 3
+for img_path, accuracy in normalize_score(similar_results_dict[:N]):
+    if os.path.basename(img_path) == "Mickey-Mouse-vector.png" or accuracy > 0.9 :
+        top_results.append((img_path,"danger"))
+    elif accuracy > 0.6:
+        top_results.append((img_path,"warning"))
+    else:
+        top_results.append((img_path,"safe"))
 
-## 점수 구현 : 최댓값 = 3.35
-
-results_list = [{"image_path": img_path, "accuracy": accuracy} for img_path, accuracy in top_results]
+results_list = [{"image_path": img_path, "result": result} for img_path, result in top_results]
 
 # Convert the list to JSON
 results_json = json.dumps(results_list)
@@ -151,9 +160,7 @@ if response.status_code == 200:
     print('Successfully sent the POST request.')
 else:
     print(f'Failed to send the POST request. Status code: {response.status_code}')
-    
-    
-    
+        
 # Show json
 data = json.loads(results_json)
 print(data)
