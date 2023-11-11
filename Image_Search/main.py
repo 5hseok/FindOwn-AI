@@ -133,8 +133,13 @@ similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], 
 top_results = []
 #출력할 이미지 개수 설정 
 N = 3
+
+# 이미지 침해도 설정
+specific_Logo = True
 for img_path, accuracy in normalize_score(similar_results_dict[:N]):
-    if os.path.basename(img_path) == "Mickey-Mouse-vector.png" or accuracy > 0.9 :
+    if "disney" in os.path.basename(img_path) or "mickey" in os.path.basename(img_path) or "monster" in os.path.basename(img_path) or "minnie" in os.path.basename(img_path):
+        specific_Logo = False
+    if specific_Logo and accuracy > 0.9 :
         top_results.append((img_path,"danger"))
     elif accuracy > 0.6:
         top_results.append((img_path,"warning"))
