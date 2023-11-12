@@ -168,4 +168,5 @@ else:
         
 # Show json
 data = json.loads(results_json)
+# print data
 print(data)
