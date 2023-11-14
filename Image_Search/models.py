@@ -174,14 +174,6 @@ class Image_Search_Model:
             topN_image_list = self.remove_duplicated_images(distances, topN)
 
             return topN_image_list
-
-    def test(self, img_path1,img_path2):
-        img1 = Image.open(img_path1).convert('RGB')
-        img2 = Image.open(img_path2).convert('RGB')
-        img1_embedding = self.predict(img1)
-        img2_embedding = self.predict(img2)
-        distance = torch.nn.functional.cosine_similarity(torch.tensor(img1_embedding), torch.tensor(img2_embedding), dim=0)
-        print(distance)
         
 class Image_Object_Detections:
     def __init__(self,topN=1710):
