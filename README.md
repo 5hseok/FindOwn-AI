@@ -28,7 +28,10 @@ object_model에서 필요한 pbtxt파일. 어떤 객체를 탐지했는지를 �
 초기 단계 : pkl에서 data를 불러올 때, 이미지 경로별로 튜플을 생성하여 점수를 저장한다. 
 
 ### 레포 사용 순서
-1. ImageDB\\Logos에 있는 이미지 파일과 pbtxt파일, EfficientNet, features_logo.pkl 파일 등을 내려 받는다.
-2. requirement.txt에 있는 lib들을 설치한다.
-3. main.py 실행
-4. pkl 파일 오류로 실행이 안될 시 zip 파일 다운로드 후 같은 폴더에 pkl 파일 위치시켜서 다시 실행.
+1. ImageDB\\Logos에 있는 이미지 파일과 pkl.zip을 압축을 풀어 pkl 파일들을 내려 받는다.
+2. requirement.txt에 있는 lib들을 설치한다. (pip install -r requirements.txt)
+3. main.py에 35행 root_dir에 본인이 이미지 파일들을 저장한 디렉토리의 주소로 교체한다.
+4. target_image_path에는 사용자가 업로드한 이미지의 url을 넣는다.
+5. 155행에 url을 보낼 url로 바꾼다.
+4번과 5번은 제가 건드릴 수 없을 것 같아서 example들로 넣어뒀습니다. 172행의 json 프린트 문은 json이 잘 생성되었는지 확인하는 용도이므로
+삭제하셔도 무방합니다.
