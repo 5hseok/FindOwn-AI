@@ -1,4 +1,13 @@
 # FindOwn-AI
+## 레포 사용 순서
+1. ImageDB\\Logos에 있는 이미지 파일과 pkl.zip을 압축을 풀어 pkl 파일들을 내려 받는다.
+2. requirement.txt에 있는 lib들을 설치한다. (pip install -r requirements.txt)
+3. main.py에 35행 root_dir에 본인이 이미지 파일들을 저장한 디렉토리의 주소로 교체한다.
+4. target_image_path에는 사용자가 업로드한 이미지의 url을 넣는다.
+5. 155행 부분의 url을 josn 데이터를 보낼 url로 설정한다.
+4번과 5번은 일단 example들로 넣어뒀습니다. 172행의 json 프린트 문은 json이 잘 생성되었는지 확인하는 용도이므로
+삭제하셔도 무방합니다.
+
 ### extract_features.py
 ImageDB에서 이미지들을 미리 특징 추출하여 pkl로 바꾸는 작업을 위한 코드. ImageDB를 다운 받았다면, 
 ### models.py
@@ -26,12 +35,3 @@ object_model에서 필요한 pbtxt파일. 어떤 객체를 탐지했는지를 �
 
 ### 점수 판별 방식
 초기 단계 : pkl에서 data를 불러올 때, 이미지 경로별로 튜플을 생성하여 점수를 저장한다. 
-
-### 레포 사용 순서
-1. ImageDB\\Logos에 있는 이미지 파일과 pkl.zip을 압축을 풀어 pkl 파일들을 내려 받는다.
-2. requirement.txt에 있는 lib들을 설치한다. (pip install -r requirements.txt)
-3. main.py에 35행 root_dir에 본인이 이미지 파일들을 저장한 디렉토리의 주소로 교체한다.
-4. target_image_path에는 사용자가 업로드한 이미지의 url을 넣는다.
-5. 155행에 url을 보낼 url로 바꾼다.
-4번과 5번은 제가 건드릴 수 없을 것 같아서 example들로 넣어뒀습니다. 172행의 json 프린트 문은 json이 잘 생성되었는지 확인하는 용도이므로
-삭제하셔도 무방합니다.
