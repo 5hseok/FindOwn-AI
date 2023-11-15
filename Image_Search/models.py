@@ -94,42 +94,50 @@ class Image_Search_Model:
 
     def extract_features(self,root_dir):
         features = []
-        # Load image files from the root directory 
         self.image_files = [os.path.join(dirpath, f)
                             for dirpath, dirnames, files in os.walk(root_dir)
                             for f in files if f.endswith('.jpg') or f.endswith('.png')]
-        print(len(self.image_files))
+
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
         dataloader = DataLoader(dataset,
-                                batch_size=16,
-                                num_workers=2,
+                                batch_size=8,
+                                num_workers=0,
                                 pin_memory=True if torch.cuda.is_available() else False)
 
         pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
-        torch.cuda.empty_cache()
-        for paths, images in dataloader:
-            if torch.cuda.is_available():
-                images = images.cuda()
-            try:
-                self.model.eval()
-                features_batch = self.model.extract_features(images)
+
+        try:
+            for paths, images in dataloader:
                 if torch.cuda.is_available():
-                    out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).detach().cpu().numpy()
-                else:
-                    out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).detach().numpy()
-            except Exception as e:
-                print(f"Error: Failed to extract features. {e}")
-                return
-            
-            for path,out_feature in zip(paths,out_features_batch ):
-                new_feature_pair=(path,out_feature)
-                features.append(new_feature_pair)
+                    images = images.cuda()
+                try:
+                    self.model.eval()
+                    features_batch = self.model.extract_features(images)
+                    if torch.cuda.is_available():
+                        out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).detach().cpu().numpy()
+                    else:
+                        out_features_batch = F.adaptive_avg_pool2d(features_batch , 1).reshape(features_batch .shape[0], -1).detach().numpy()
+                except Exception as e:
+                    print(f"Error: Failed to extract features. Exception: {e}")
+                    return
 
-                yield new_feature_pair
+                for path,out_feature in zip(paths,out_features_batch ):
+                    new_feature_pair=(path,out_feature)
+                    features.append(new_feature_pair)
 
-            pbar.update(images.shape[0])
-        
+                pbar.update(images.shape[0])
+                torch.cuda.empty_cache()
+        except Exception as e:
+            print(f"Error in data loading: {e}")
+            return
+        print("Finished extracting features")
         pbar.close()
+
+        # Save the features to a pkl file
+        with open('features_logo.pkl', 'wb') as f:
+            pickle.dump(features, f)
+
+
         
     def remove_duplicated_images(self, image_list, topN, error_rate=0.05):
         # Sort image list by similarity score
@@ -257,22 +265,31 @@ class Image_Object_Detections:
     def create_object_detection_pkl(self, root_dir, output_file, search_score=0.10):
         # 모든 이미지 파일에 대한 object detection 결과를 저장할 딕셔너리
         detection_dict = {}
+        
+        # root_dir에서 모든 이미지 파일 리스트 구하기
+        image_files = [os.path.join(dirpath, f)
+                    for dirpath, dirnames, files in os.walk(root_dir)
+                    for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-        # root_dir에서 모든 이미지 파일에 대해 object detection 수행
-        for dirpath, dirnames, filenames in os.walk(root_dir):
-            for filename in filenames:
-                if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    image_path = os.path.join(dirpath, filename)
-                    detected_objects = self.detect_objects(image_path, search_score)
-                    
-                    # 이미지 경로를 key로, object detection 결과를 value로 하는 항목 추가
-                    detection_dict[image_path] = detected_objects
+        # tqdm 프로그레스 바 생성
+        pbar = tqdm(total=len(image_files), desc="Detecting Objects")
+
+        # 모든 이미지 파일에 대해 object detection 수행
+        for image_path in image_files:
+            detected_objects = self.detect_objects(image_path, search_score)
+            
+            # 이미지 경로를 key로, object detection 결과를 value로 하는 항목 추가
+            detection_dict[image_path] = detected_objects
+
+            # 프로그레스 바 업데이트
+            pbar.update(1)
+
+        pbar.close()
 
         # 딕셔너리를 pkl 파일로 저장
         with open(output_file, 'wb') as f:
             pickle.dump(detection_dict, f)
 
-        print(f"Object detection results saved to {output_file}.")
 
     def search_similar_images(self, target_image_path, detection_dict, search_score=0.10):
         target_object = self.detect_objects(target_image_path, search_score)
