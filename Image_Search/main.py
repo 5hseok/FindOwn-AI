@@ -91,38 +91,38 @@ if __name__ == '__main__':
         
     similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
-    # #################################   Print Test Code  #########################################
-    # import matplotlib.image as mpimg
-    # import urllib.request
-    # import numpy as np
-    # from PIL import Image
+    #################################   Print Test Code  #########################################
+    import matplotlib.image as mpimg
+    import urllib.request
+    import numpy as np
+    from PIL import Image
 
-    # N = 10  # Display top N images
-    # fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
+    N = 10  # Display top N images
+    fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
 
-    # # Display target image
-    # if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
-    #     with urllib.request.urlopen(target_image_path) as url:
-    #         img = Image.open(url)
-    # else:
-    #     img = mpimg.imread(target_image_path)
-    # ax[0].imshow(img)
-    # ax[0].set_title("Target Image")
+    # Display target image
+    if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
+        with urllib.request.urlopen(target_image_path) as url:
+            img = Image.open(url)
+    else:
+        img = mpimg.imread(target_image_path)
+    ax[0].imshow(img)
+    ax[0].set_title("Target Image")
 
-    # # Display top N similar images
-    # for i in range(1, N+1):
-    #     img_path, accuracy = similar_results_dict[i-1]
-    #     if img_path.startswith('http://') or img_path.startswith('https://'):
-    #         with urllib.request.urlopen(img_path) as url:
-    #             img = Image.open(url)
+    # Display top N similar images
+    for i in range(1, N+1):
+        img_path, accuracy = similar_results_dict[i-1]
+        if img_path.startswith('http://') or img_path.startswith('https://'):
+            with urllib.request.urlopen(img_path) as url:
+                img = Image.open(url)
                 
-    #     else:
-    #         img = mpimg.imread(img_path)
-    #     ax[i].imshow(img)
-    #     ax[i].set_title("Similarity: {:.8f}".format(accuracy))
+        else:
+            img = mpimg.imread(img_path)
+        ax[i].imshow(img)
+        ax[i].set_title("Similarity: {:.8f}".format(accuracy))
 
-    # plt.tight_layout()
-    # plt.show()
+    plt.tight_layout()
+    plt.show()
 
 
     ####                                Sending json to server                                ####
