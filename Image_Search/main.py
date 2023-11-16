@@ -28,7 +28,7 @@ if __name__ == '__main__':
     ################################################################################################################
     target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
     #Test#
-    # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
+    target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
     # target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
     # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
     efficientnet_scores = min_max_normalize(efficientnet_scores)
     for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-        similar_results_dict[image_path] += 0.7 * score
+        similar_results_dict[image_path] += 0.9 * score
     
     # color Histogram_result
     color_model = Test.ColorSimilarityModel()
@@ -129,8 +129,7 @@ if __name__ == '__main__':
 
     # Create a list of dictionaries, each containing the image path and accuracy
     top_results = []
-    #출력할 이미지 개수 설정 
-    N = 3
+    N=10
 
     # 이미지 침해도 설정
     specific_Logo = True
