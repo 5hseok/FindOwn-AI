@@ -29,7 +29,7 @@ if __name__ == '__main__':
     target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
     #Test#
     target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
-    # target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
+    target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
     # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
 
     ################################################################################################################
