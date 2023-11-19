@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     # Create a list of dictionaries, each containing the image path and accuracy
     top_results = []
-    N=10
+    N=3
 
     # 이미지 침해도 설정
     specific_Logo = True
