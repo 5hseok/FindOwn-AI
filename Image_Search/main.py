@@ -167,3 +167,6 @@ if __name__ == '__main__':
     data = json.loads(results_json)
     # print data
     print(data)
+    
+    # 이미지 파일을 바탕으로 출원번호, 출원년도를 request parameters에 넣어 API를 통해 출원 등록 정보를 가져온다.
+    # 가져온 출원 정보와 침해도 정도를 json으로 만들어 백엔드에 보내기
