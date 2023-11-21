@@ -28,8 +28,8 @@ if __name__ == '__main__':
     ################################################################################################################
     target_image_path= "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
     #Test#
-    # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
-    # target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
+    target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
+    target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
     # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
 
     ################################################################################################################
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
     efficientnet_scores = min_max_normalize(efficientnet_scores)
     for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-        similar_results_dict[image_path] += 0.7 * score
+        similar_results_dict[image_path] += 0.9 * score
     
     # color Histogram_result
     color_model = Test.ColorSimilarityModel()
@@ -91,46 +91,45 @@ if __name__ == '__main__':
         
     similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
-    # #################################   Print Test Code  #########################################
-    # import matplotlib.image as mpimg
-    # import urllib.request
-    # import numpy as np
-    # from PIL import Image
+    #################################   Print Test Code  #########################################
+    import matplotlib.image as mpimg
+    import urllib.request
+    import numpy as np
+    from PIL import Image
 
-    # N = 10  # Display top N images
-    # fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
+    N = 10  # Display top N images
+    fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
 
-    # # Display target image
-    # if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
-    #     with urllib.request.urlopen(target_image_path) as url:
-    #         img = Image.open(url)
-    # else:
-    #     img = mpimg.imread(target_image_path)
-    # ax[0].imshow(img)
-    # ax[0].set_title("Target Image")
+    # Display target image
+    if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
+        with urllib.request.urlopen(target_image_path) as url:
+            img = Image.open(url)
+    else:
+        img = mpimg.imread(target_image_path)
+    ax[0].imshow(img)
+    ax[0].set_title("Target Image")
 
-    # # Display top N similar images
-    # for i in range(1, N+1):
-    #     img_path, accuracy = similar_results_dict[i-1]
-    #     if img_path.startswith('http://') or img_path.startswith('https://'):
-    #         with urllib.request.urlopen(img_path) as url:
-    #             img = Image.open(url)
+    # Display top N similar images
+    for i in range(1, N+1):
+        img_path, accuracy = similar_results_dict[i-1]
+        if img_path.startswith('http://') or img_path.startswith('https://'):
+            with urllib.request.urlopen(img_path) as url:
+                img = Image.open(url)
                 
-    #     else:
-    #         img = mpimg.imread(img_path)
-    #     ax[i].imshow(img)
-    #     ax[i].set_title("Similarity: {:.8f}".format(accuracy))
+        else:
+            img = mpimg.imread(img_path)
+        ax[i].imshow(img)
+        ax[i].set_title("Similarity: {:.8f}".format(accuracy))
 
-    # plt.tight_layout()
-    # plt.show()
+    plt.tight_layout()
+    plt.show()
 
 
     ####                                Sending json to server                                ####
 
     # Create a list of dictionaries, each containing the image path and accuracy
     top_results = []
-    #출력할 이미지 개수 설정 
-    N = 3
+    N=3
 
     # 이미지 침해도 설정
     specific_Logo = True
@@ -168,3 +167,6 @@ if __name__ == '__main__':
     data = json.loads(results_json)
     # print data
     print(data)
+    
+    # 이미지 파일을 바탕으로 출원번호, 출원년도를 request parameters에 넣어 API를 통해 출원 등록 정보를 가져온다.
+    # 가져온 출원 정보와 침해도 정도를 json으로 만들어 백엔드에 보내기
