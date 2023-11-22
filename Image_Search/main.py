@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-import Test
+import models
 import cv2
 import os
 import pickle
@@ -33,12 +33,12 @@ if __name__ == '__main__':
     # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
 
     ################################################################################################################
-    root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
+    root_dir = "C:\\Users\\DGU_ICE\\AI_Trademark_IMG"
     #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
     similar_results_dict = {}
 
     if not os.path.exists('features_logo_Kipris.pkl'):
-        similar_model = Test.Image_Search_Model()
+        similar_model = models.Image_Search_Model()
         Trademark_pkl = similar_model.extract_features(root_dir)  
     with open('features_logo_Kipris.pkl','rb') as f:
         load = pickle.load(f)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         similar_results_dict.update({image_path:0.0})
 
     #EfficientNet_results
-    similar_model = Test.Image_Search_Model(pre_extracted_features='features_logo_Kipris.pkl')
+    similar_model = models.Image_Search_Model(pre_extracted_features='features_logo_Kipris.pkl')
     efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
     efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
     efficientnet_scores = min_max_normalize(efficientnet_scores)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         similar_results_dict[image_path] += 0.9 * score
     
     # color Histogram_result
-    color_model = Test.ColorSimilarityModel()
+    color_model = models.ColorSimilarityModel()
     if not os.path.exists('colorHistograms_logo_Kipris.pkl'):
         color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.pkl')
     histograms = color_model.load_histograms('colorHistograms_logo_Kipris.pkl')
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
         
     # object_detection_retinanet_result
-    Object_model  = Test.Image_Object_Detections(len(similar_results_dict))
+    Object_model  = models.Image_Object_Detections(len(similar_results_dict))
     if not os.path.exists('object_logo_Kipris.pkl'):
         Object_model.create_object_detection_pkl(root_dir,'object_logo_Kipris.pkl')
     with open('object_logo_Kipris.pkl','rb') as f:
@@ -79,7 +79,7 @@ if __name__ == '__main__':
             similar_results_dict[img_path] += 0.15 * score
 
     #resnet_results
-    cnn = Test.CNNModel()
+    cnn = models.CNNModel()
     if not os.path.exists('cnn_features_Kipris.pkl'):
         cnn.extract_features_from_dir(root_dir, 'cnn_features_Kipris.pkl')
     cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
