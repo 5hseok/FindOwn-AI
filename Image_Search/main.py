@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
 
     ################################################################################################################
-    root_dir = "C:\\Users\\DGU_ICE\\AI_Trademark_IMG"
+    root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
     #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
     similar_results_dict = {}
 
