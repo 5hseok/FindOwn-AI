@@ -355,18 +355,12 @@ class ColorSimilarityModel:
         image_files = [os.path.join(dirpath, f)
                     for dirpath, dirnames, files in os.walk(root_dir)
                     for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        for i in range(len(image_files)):
+        for i in tqdm(range(len(image_files)), desc="Processing images"):
             hist = self.calculate_histogram(image_files[i])
             histograms[image_files[i]] = hist
-        # for filename in os.listdir(root_dir):
-        #     if filename.endswith(('.jpg', '.png', '.jpeg')):  # 이미지 파일만 처리
-        #         img_path = os.path.join(root_dir, filename)
-        #         hist = self.calculate_histogram(img_path)
-        #         histograms[img_path] = hist
 
         with open(save_path, 'wb') as f:
             pickle.dump(histograms, f)
-
     def load_histograms(self, load_path):
         with open(load_path, 'rb') as f:
             histograms = pickle.load(f)
