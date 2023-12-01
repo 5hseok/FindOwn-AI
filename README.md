@@ -7,10 +7,13 @@
 3. main.py의 35행 root_dir에 본인이 이미지 파일들을 저장한 디렉토리의 주소를 입력한다.
 4. main.py의 target_image_path에는 사용자가 업로드한 이미지의 url을 넣는다.
 5. main.py의 155행 부분의 url을 josn 데이터를 보낼 url로 설정한다.
+
 ### 키프리스 이미지 사용 o - API를 통해 상표 정보 제공
 1. 따로 받은 이미지 파일들 C:\\users\\FindOwn에 내려받기
 2. 위와 동일하게 실행하여 pkl 파일을 직접 저장하거나(첫 소요시간 매우 큼), 따로 전달받은 pkl 파일을 같은 위치에 넣어둔다.
 3. search_Trademark_API.py 파일 개발 중
+
+# 현재는 키프리스 이미지 데이터 36만개를 전처리하여 pkl로 저장하는 과정 중에 있습니다. 그러나, 너무 많은 파일 크기로 인해 상당한 시간이 요구되고 있습니다. 
 
 ### 비고
 - json의 post url과 사용자의 이미지 url을 받아오는 target_image_path는 우선 임의의 url을 넣어뒀습니다. 현재 target_image_path는 빽다방 로고이고, post url은 example로 해놨습니다. json의 header 역시 application/json으로 임의로 넣었습니다.
