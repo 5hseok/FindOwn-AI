@@ -414,7 +414,8 @@ class CNNModel:
 
     def extract_features_from_dir(self, root_dir, save_path):
         features = {}
-        for filename in os.listdir(root_dir):
+        filenames = os.listdir(root_dir)
+        for filename in tqdm(filenames, desc="Extracting features"):
             if filename.endswith(".jpg") or filename.endswith(".png"):
                 image_path = os.path.join(root_dir, filename)
                 feature = self.extract_feature(image_path)
