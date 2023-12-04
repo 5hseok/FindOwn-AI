@@ -101,7 +101,7 @@ class Image_Search_Model:
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
         dataloader = DataLoader(dataset,
                                 batch_size=8,
-                                num_workers=0,
+                                num_workers=1,
                                 pin_memory=True if torch.cuda.is_available() else False)
 
         pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
@@ -414,7 +414,9 @@ class CNNModel:
 
     def extract_features_from_dir(self, root_dir, save_path):
         features = {}
-        filenames = os.listdir(root_dir)
+        filenames = [os.path.join(dirpath, f)
+                    for dirpath, dirnames, files in os.walk(root_dir)
+                    for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
         for filename in tqdm(filenames, desc="Extracting features"):
             if filename.endswith(".jpg") or filename.endswith(".png"):
                 image_path = os.path.join(root_dir, filename)
