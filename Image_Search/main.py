@@ -36,7 +36,21 @@ if __name__ == '__main__':
     root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
     #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
     similar_results_dict = {}
-
+        #resnet_results
+    cnn = models.CNNModel()
+    if not os.path.exists('cnn_features_Kipris.pkl'):
+        cnn.extract_features_from_dir(root_dir, 'cnn_features_Kipris.pkl')
+    with open('cnn_features_Kipris.pkl','rb') as f:
+        load = pickle.load(f)
+    for image_path in load:
+        similar_results_dict.update({image_path:0.0})
+    cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
+    cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
+    cnn_scores = min_max_normalize(cnn_scores)
+    for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
+        img_path = img_path
+        similar_results_dict[img_path] += 2.5 * score
+    
     if not os.path.exists('features_logo_Kipris.pkl'):
         similar_model = models.Image_Search_Model()
         Trademark_pkl = similar_model.extract_features(root_dir)  
@@ -76,17 +90,6 @@ if __name__ == '__main__':
     color_scores = min_max_normalize(color_scores)
     for (image_path, _), score in zip(similarities,color_scores):
         similar_results_dict[image_path] -= 1.0 * score
-
-    #resnet_results
-    cnn = models.CNNModel()
-    if not os.path.exists('cnn_features_Kipris.pkl'):
-        cnn.extract_features_from_dir(root_dir, 'cnn_features_Kipris.pkl')
-    cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
-    cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
-    cnn_scores = min_max_normalize(cnn_scores)
-    for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
-        img_path = root_dir+'\\'+img_path
-        similar_results_dict[img_path] += 2.5 * score
         
     similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
