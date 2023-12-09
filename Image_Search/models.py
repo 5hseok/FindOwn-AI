@@ -53,7 +53,7 @@ class ImageDataset(Dataset):
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, model_name='efficientnet-b7', pre_extracted_features=None):
+    def __init__(self, model_name='efficientnet-b0', pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
 
         if torch.cuda.is_available():
@@ -101,7 +101,7 @@ class Image_Search_Model:
         dataset = ImageDataset(self.image_files, transform=self.preprocess)
         dataloader = DataLoader(dataset,
                                 batch_size=8,
-                                num_workers=1,
+                                num_workers=0,
                                 pin_memory=True if torch.cuda.is_available() else False)
 
         pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
@@ -134,7 +134,7 @@ class Image_Search_Model:
         pbar.close()
 
         # Save the features to a pkl file
-        with open('features_logo.pkl', 'wb') as f:
+        with open('features_logo_Kipris.pkl', 'wb') as f:
             pickle.dump(features, f)
 
 
@@ -430,13 +430,7 @@ class CNNModel:
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
     def compare_features(self, target_image_path, features_path):
-        if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
-            # If target_image_path is a URL, download the image and convert it to a PIL image
-            response = requests.get(target_image_path)
-            target_image = Image.open(BytesIO(response.content)).convert('RGB')
-        else:
-            # If target_image_path is not a URL, assume it is a file path
-            target_image = Image.open(target_image_path).convert('RGB')
+        
         target_feature = self.extract_feature(target_image_path)
 
         with open(features_path, 'rb') as f:
