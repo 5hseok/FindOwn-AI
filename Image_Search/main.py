@@ -44,23 +44,20 @@ if __name__ == '__main__':
         load = pickle.load(f)
     for image_path in load:
         similar_results_dict.update({image_path:0.0})
+        
     cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
     cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
     cnn_scores = min_max_normalize(cnn_scores)
+    
     for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
         img_path = img_path
         similar_results_dict[img_path] += 2.5 * score
-    
-    if not os.path.exists('features_logo_Kipris.pkl'):
+        
+    if not os.path.exists('features_logo.pkl'):
         similar_model = models.Image_Search_Model()
         Trademark_pkl = similar_model.extract_features(root_dir)  
-    with open('features_logo_Kipris.pkl','rb') as f:
-        load = pickle.load(f)
-    for image_path, array in load:
-        similar_results_dict.update({image_path:0.0})
-
     #EfficientNet_results
-    similar_model = models.Image_Search_Model(pre_extracted_features='features_logo_Kipris.pkl')
+    similar_model = models.Image_Search_Model(pre_extracted_features='features_logo.pkl')
     efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
     efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
     efficientnet_scores = min_max_normalize(efficientnet_scores)
