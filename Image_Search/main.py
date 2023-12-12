@@ -106,7 +106,7 @@ if __name__ == '__main__':
     else:
         img = mpimg.imread(target_image_path)
     ax[0].imshow(img)
-    ax[0].set_title("Target Image")
+    ax[0].set_title("Target Image (User's Image)")
 
     # Display top N similar images
     for i in range(1, N+1):
