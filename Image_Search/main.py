@@ -118,7 +118,7 @@ if __name__ == '__main__':
         else:
             img = mpimg.imread(img_path)
         ax[i].imshow(img)
-        ax[i].set_title("Similarity: {:.8f}".format(accuracy))
+        ax[i].set_title("Similarity : {:.8f}".format(accuracy))
 
     plt.tight_layout()
     plt.show()
