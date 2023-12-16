@@ -53,6 +53,17 @@ if __name__ == '__main__':
         img_path = img_path
         similar_results_dict[img_path] += 2.5 * score
         
+            # color Histogram_result
+    color_model = models.ColorSimilarityModel()
+    if not os.path.exists('colorHistograms_logo_Kipris.pkl'):
+        color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.pkl')
+    histograms = color_model.load_histograms('colorHistograms_logo_Kipris.pkl')
+    similarities = color_model.predict(target_image_path, histograms)
+    color_scores = [accuracy for img_path, accuracy in similarities]
+    color_scores = min_max_normalize(color_scores)
+    for (image_path, _), score in zip(similarities,color_scores):
+        similar_results_dict[image_path] -= 1.0 * score    
+        
     if not os.path.exists('features_logo.pkl'):
         similar_model = models.Image_Search_Model()
         Trademark_pkl = similar_model.extract_features(root_dir)  
@@ -76,17 +87,6 @@ if __name__ == '__main__':
         object_scores = min_max_normalize(object_scores)
         for (img_path, _, _),score in zip(result, object_scores):
             similar_results_dict[img_path] += 0.15 * score
-    
-    # color Histogram_result
-    color_model = models.ColorSimilarityModel()
-    if not os.path.exists('colorHistograms_logo_Kipris.pkl'):
-        color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.pkl')
-    histograms = color_model.load_histograms('colorHistograms_logo_Kipris.pkl')
-    similarities = color_model.predict(target_image_path, histograms)
-    color_scores = [accuracy for img_path, accuracy in similarities]
-    color_scores = min_max_normalize(color_scores)
-    for (image_path, _), score in zip(similarities,color_scores):
-        similar_results_dict[image_path] -= 1.0 * score
         
     similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
