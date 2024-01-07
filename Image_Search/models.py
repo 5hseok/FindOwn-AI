@@ -53,7 +53,7 @@ class ImageDataset(Dataset):
         return img_path, img
     
 class Image_Search_Model:
-    def __init__(self, model_name='efficientnet-b7', pre_extracted_features=None):
+    def __init__(self, model_name='efficientnet-b0', pre_extracted_features=None):
         self.model = EfficientNet.from_pretrained(model_name)
 
         if torch.cuda.is_available():
@@ -134,7 +134,7 @@ class Image_Search_Model:
         pbar.close()
 
         # Save the features to a pkl file
-        with open('features_logo.pkl', 'wb') as f:
+        with open('features_logo_Kipris.pkl', 'wb') as f:
             pickle.dump(features, f)
 
 
@@ -414,7 +414,10 @@ class CNNModel:
 
     def extract_features_from_dir(self, root_dir, save_path):
         features = {}
-        for filename in os.listdir(root_dir):
+        filenames = [os.path.join(dirpath, f)
+                    for dirpath, dirnames, files in os.walk(root_dir)
+                    for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        for filename in tqdm(filenames, desc="Extracting features"):
             if filename.endswith(".jpg") or filename.endswith(".png"):
                 image_path = os.path.join(root_dir, filename)
                 feature = self.extract_feature(image_path)
@@ -427,13 +430,7 @@ class CNNModel:
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
     def compare_features(self, target_image_path, features_path):
-        if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
-            # If target_image_path is a URL, download the image and convert it to a PIL image
-            response = requests.get(target_image_path)
-            target_image = Image.open(BytesIO(response.content)).convert('RGB')
-        else:
-            # If target_image_path is not a URL, assume it is a file path
-            target_image = Image.open(target_image_path).convert('RGB')
+        
         target_feature = self.extract_feature(target_image_path)
 
         with open(features_path, 'rb') as f:

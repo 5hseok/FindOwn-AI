@@ -36,24 +36,24 @@ if __name__ == '__main__':
     root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
     #target_image_path를 url로 받아오면 아래 코드로 유사도 검사 후 결과 dict를 json으로 만들어 다시 전송
     similar_results_dict = {}
-
-    if not os.path.exists('features_logo_Kipris.pkl'):
-        similar_model = models.Image_Search_Model()
-        Trademark_pkl = similar_model.extract_features(root_dir)  
-    with open('features_logo_Kipris.pkl','rb') as f:
+        #resnet_results
+    cnn = models.CNNModel()
+    if not os.path.exists('cnn_features_Kipris.pkl'):
+        cnn.extract_features_from_dir(root_dir, 'cnn_features_Kipris.pkl')
+    with open('cnn_features_Kipris.pkl','rb') as f:
         load = pickle.load(f)
-    for image_path, array in load:
+    for image_path in load:
         similar_results_dict.update({image_path:0.0})
-
-    #EfficientNet_results
-    similar_model = models.Image_Search_Model(pre_extracted_features='features_logo_Kipris.pkl')
-    efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
-    efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
-    efficientnet_scores = min_max_normalize(efficientnet_scores)
-    for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-        similar_results_dict[image_path] += 0.9 * score
+        
+    cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
+    cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
+    cnn_scores = min_max_normalize(cnn_scores)
     
-    # color Histogram_result
+    for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
+        img_path = img_path
+        similar_results_dict[img_path] += 2.5 * score
+        
+            # color Histogram_result
     color_model = models.ColorSimilarityModel()
     if not os.path.exists('colorHistograms_logo_Kipris.pkl'):
         color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.pkl')
@@ -62,10 +62,20 @@ if __name__ == '__main__':
     color_scores = [accuracy for img_path, accuracy in similarities]
     color_scores = min_max_normalize(color_scores)
     for (image_path, _), score in zip(similarities,color_scores):
-        similar_results_dict[image_path] -= 1.0 * score
-
+        similar_results_dict[image_path] -= 1.0 * score    
         
-    # object_detection_retinanet_result
+    if not os.path.exists('features_logo.pkl'):
+        similar_model = models.Image_Search_Model()
+        Trademark_pkl = similar_model.extract_features(root_dir)  
+    #EfficientNet_results
+    similar_model = models.Image_Search_Model(pre_extracted_features='features_logo.pkl')
+    efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
+    efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
+    efficientnet_scores = min_max_normalize(efficientnet_scores)
+    for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
+        similar_results_dict[image_path] += 0.9 * score
+    
+        # object_detection_retinanet_result
     Object_model  = models.Image_Object_Detections(len(similar_results_dict))
     if not os.path.exists('object_logo_Kipris.pkl'):
         Object_model.create_object_detection_pkl(root_dir,'object_logo_Kipris.pkl')
@@ -77,17 +87,6 @@ if __name__ == '__main__':
         object_scores = min_max_normalize(object_scores)
         for (img_path, _, _),score in zip(result, object_scores):
             similar_results_dict[img_path] += 0.15 * score
-
-    #resnet_results
-    cnn = models.CNNModel()
-    if not os.path.exists('cnn_features_Kipris.pkl'):
-        cnn.extract_features_from_dir(root_dir, 'cnn_features_Kipris.pkl')
-    cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
-    cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
-    cnn_scores = min_max_normalize(cnn_scores)
-    for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
-        img_path = root_dir+'\\'+img_path
-        similar_results_dict[img_path] += 2.5 * score
         
     similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
 
@@ -107,7 +106,7 @@ if __name__ == '__main__':
     else:
         img = mpimg.imread(target_image_path)
     ax[0].imshow(img)
-    ax[0].set_title("Target Image")
+    ax[0].set_title("Target Image (User's Image)")
 
     # Display top N similar images
     for i in range(1, N+1):
@@ -119,7 +118,7 @@ if __name__ == '__main__':
         else:
             img = mpimg.imread(img_path)
         ax[i].imshow(img)
-        ax[i].set_title("Similarity: {:.8f}".format(accuracy))
+        ax[i].set_title("Similarity : {:.8f}".format(accuracy))
 
     plt.tight_layout()
     plt.show()
