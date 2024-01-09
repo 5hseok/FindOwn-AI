@@ -104,7 +104,7 @@ class Image_Search_Model:
                                 num_workers=0,
                                 pin_memory=True if torch.cuda.is_available() else False)
 
-        pbar = tqdm(total=len(self.image_files), desc="Extracting Features")
+        pbar = tqdm(total=len(self.image_files), desc="Extracting Effi Features")
 
         try:
             for paths, images in dataloader:
@@ -355,7 +355,7 @@ class ColorSimilarityModel:
         image_files = [os.path.join(dirpath, f)
                     for dirpath, dirnames, files in os.walk(root_dir)
                     for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        for i in tqdm(range(len(image_files)), desc="Processing images"):
+        for i in tqdm(range(len(image_files)), desc="Processing Color images"):
             hist = self.calculate_histogram(image_files[i])
             histograms[image_files[i]] = hist
 
@@ -417,7 +417,7 @@ class CNNModel:
         filenames = [os.path.join(dirpath, f)
                     for dirpath, dirnames, files in os.walk(root_dir)
                     for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        for filename in tqdm(filenames, desc="Extracting features"):
+        for filename in tqdm(filenames, desc="Extracting CNN features"):
             if filename.endswith(".jpg") or filename.endswith(".png"):
                 image_path = os.path.join(root_dir, filename)
                 feature = self.extract_feature(image_path)
