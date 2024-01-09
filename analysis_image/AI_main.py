@@ -20,7 +20,7 @@ class Image_Analysis:
         scores_list = [(img_path,score / max) for (img_path,score) in scores_list]
         return scores_list
 
-    def start_analysis(self, target_image_path):
+    def start_analysis(self, target_image_path, test_value):
         # Initialize the AI_models.
         # url을 받아오는 걸로 변경 요망
         ################################################################################################################
@@ -85,39 +85,39 @@ class Image_Analysis:
                 similar_results_dict[img_path] += 0.15 * score
             
         similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
+        if test_value is True:
+            #################################   Print Test Code  #########################################
+            import matplotlib.image as mpimg
+            import urllib.request
+            import numpy as np
+            from PIL import Image
 
-        #################################   Print Test Code  #########################################
-        import matplotlib.image as mpimg
-        import urllib.request
-        import numpy as np
-        from PIL import Image
+            N = 10  # Display top N images
+            fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
 
-        N = 10  # Display top N images
-        fig, ax = plt.subplots(1, N+1, figsize=(20, 10))
-
-        # Display target image
-        if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
-            with urllib.request.urlopen(target_image_path) as url:
-                img = Image.open(url)
-        else:
-            img = mpimg.imread(target_image_path)
-        ax[0].imshow(img)
-        ax[0].set_title("Target Image (User's Image)")
-
-        # Display top N similar images
-        for i in range(1, N+1):
-            img_path, accuracy = similar_results_dict[i-1]
-            if img_path.startswith('http://') or img_path.startswith('https://'):
-                with urllib.request.urlopen(img_path) as url:
+            # Display target image
+            if target_image_path.startswith('http://') or target_image_path.startswith('https://'):
+                with urllib.request.urlopen(target_image_path) as url:
                     img = Image.open(url)
-                    
             else:
-                img = mpimg.imread(img_path)
-            ax[i].imshow(img)
-            ax[i].set_title("Similarity : {:.8f}".format(accuracy))
+                img = mpimg.imread(target_image_path)
+            ax[0].imshow(img)
+            ax[0].set_title("Target Image (User's Image)")
 
-        plt.tight_layout()
-        plt.show()
+            # Display top N similar images
+            for i in range(1, N+1):
+                img_path, accuracy = similar_results_dict[i-1]
+                if img_path.startswith('http://') or img_path.startswith('https://'):
+                    with urllib.request.urlopen(img_path) as url:
+                        img = Image.open(url)
+                        
+                else:
+                    img = mpimg.imread(img_path)
+                ax[i].imshow(img)
+                ax[i].set_title("Similarity : {:.8f}".format(accuracy))
+
+            plt.tight_layout()
+            plt.show()
 
 
         ####                                Sending json to server                                ####
@@ -131,41 +131,23 @@ class Image_Analysis:
         for img_path, accuracy in self.normalize_score(similar_results_dict[:N]):
             if "disney" in os.path.basename(img_path) or "mickey" in os.path.basename(img_path) or "monster" in os.path.basename(img_path) or "minnie" in os.path.basename(img_path):
                 specific_Logo = False
-            if specific_Logo and accuracy > 0.9 :
-                top_results.append((img_path,"danger"))
-            elif accuracy > 0.6:
-                top_results.append((img_path,"warning"))
+            if specific_Logo and accuracy > 0.82 :
+                top_results.append((img_path, "danger", accuracy))
+            elif accuracy > 0.74:
+                top_results.append((img_path, "warning", accuracy))
             else:
-                top_results.append((img_path,"safe"))
+                top_results.append((img_path, "safe", accuracy))
 
-        results_list = [{"image_path": img_path, "result": result} for img_path, result in top_results]
+        results_list = [{"image_path": img_path, "result": result, "accuracy":accuracy} for img_path, result, accuracy in top_results]
 
         # Convert the list to JSON
         results_json = json.dumps(results_list)
-
-        # Specify the URL to send the POST request to
-        url = 'http://example.com/api'  # Change this
-
-        # Set the headers for the request
-        headers = {'Content-Type': 'application/json'}
-
-        # Send the POST request
-        response = requests.post(url, headers=headers, data=results_json)
-
-        # Check the response
-        if response.status_code == 200:
-            print('Successfully sent the POST request.')
-        else:
-            print(f'Failed to send the POST request. Status code: {response.status_code}')
-                
         # Show json
         data = json.loads(results_json)
         # print data
         print(data)
-        
-        # 이미지 파일을 바탕으로 출원번호, 출원년도를 request parameters에 넣어 API를 통해 출원 등록 정보를 가져온다.
-        # 가져온 출원 정보와 침해도 정도를 json으로 만들어 백엔드에 보내기
+        return results_json
         
 if __name__ == "__main__":
     image_analysis = Image_Analysis()
-    image_analysis.start_analysis("https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png")
+    image_analysis.start_analysis("https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png", True)
