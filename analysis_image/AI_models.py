@@ -2,6 +2,8 @@ import os
 from PIL import Image, ImageFile
 import torch
 import requests
+from joblib import dump, load
+from concurrent.futures import ProcessPoolExecutor
 from io import BytesIO
 from efficientnet_pytorch import EfficientNet
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
@@ -351,32 +353,65 @@ class ColorSimilarityModel:
         return cross_entropy
     
     def save_histograms(self, root_dir, save_path):
-        histograms = {}
         image_files = [os.path.join(dirpath, f)
                     for dirpath, dirnames, files in os.walk(root_dir)
                     for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        for i in tqdm(range(len(image_files)), desc="Processing Color images"):
-            hist = self.calculate_histogram(image_files[i])
-            histograms[image_files[i]] = hist
+        num_files = len(image_files)
+        batch_size = 5000  # Adjust this value depending on your available memory
+        num_batches = num_files // batch_size + (num_files % batch_size != 0)
 
-        with open(save_path, 'wb') as f:
-            pickle.dump(histograms, f)
+        for i in range(num_batches):
+            histograms = {}
+            batch_files = image_files[i*batch_size:(i+1)*batch_size]
+            for file in tqdm(batch_files, desc="Processing Color images"):
+                hist = self.calculate_histogram(file)
+                histograms[file] = hist
+            dump(histograms, f"{save_path}_{i}")  # joblib.dump 사용
+
+        # 각 배치의 joblib 파일을 하나로 합치는 코드
+        merged_histograms = {}
+        for i in range(num_batches):
+            batch_histograms = load(f"{save_path}_{i}")  # 각 배치의 joblib 파일 불러오기
+            merged_histograms.update(batch_histograms)  # 합치기
+            os.remove(f"{save_path}_{i}")  # 각 배치의 joblib 파일 삭제
+        dump(merged_histograms, f"{save_path}")  # 합친 결과를 최종 joblib 파일로 저장
+
     def load_histograms(self, load_path):
-        with open(load_path, 'rb') as f:
-            histograms = pickle.load(f)
+        histograms = load(f"{load_path}")  # 최종 joblib 파일에서 histogram 가져오기
         return histograms
+
 
     def compare_histograms(self, hist1, hist2):
         return self.calculate_histogram_cross_entropy(hist1, hist2)
 
+    # def predict(self, target_image_path, histograms):
+    #     target_hist = self.calculate_histogram(target_image_path)
+    #     similarities = []
+
+    #     for filename, hist in histograms.items():
+    #         similarity = self.compare_histograms(target_hist, hist)
+    #         similarities.append((filename, similarity))
+    #     sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
+    #     return sorted_similarities
+    def _calculate_similarity(self, target_hist, img_info):
+        filename, hist = img_info
+        similarity = self.calculate_histogram_cross_entropy(target_hist, hist)
+        return (filename, similarity)
+
     def predict(self, target_image_path, histograms):
         target_hist = self.calculate_histogram(target_image_path)
-        similarities = []
 
-        for filename, hist in histograms.items():
-            similarity = self.compare_histograms(target_hist, hist)
-            similarities.append((filename, similarity))
+        # 병렬 처리를 위한 executor 생성
+        with ProcessPoolExecutor() as executor:
+            # map 함수를 사용하여 병렬 처리 시작
+            # target_hist와 img_info를 개별적인 인자로 전달
+            similarities = list(executor.map(self._calculate_similarity, 
+                                             [target_hist]*len(histograms), 
+                                             histograms.items()))
+
+        # 유사도를 기준으로 정렬
         sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
+
         return sorted_similarities
 
 class CNNModel:

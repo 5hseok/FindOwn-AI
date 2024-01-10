@@ -1,4 +1,4 @@
-import AI_models
+from . import AI_models
 import os
 import pickle
 import os
@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib.image as mpimg
 import requests
 import json
+from tqdm import tqdm
 class Image_Analysis:
     def min_max_normalize(self, scores):
         min_score = min(scores)
@@ -16,7 +17,7 @@ class Image_Analysis:
         return [(score - min_score) / (max_score - min_score) for score in scores]
 
     def normalize_score(self, scores_list):
-        max = 3.35
+        max = 5.0
         scores_list = [(img_path,score / max) for (img_path,score) in scores_list]
         return scores_list
 
@@ -47,18 +48,23 @@ class Image_Analysis:
         
         for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
             img_path = img_path
-            similar_results_dict[img_path] += 2.5 * score
+            similar_results_dict[img_path] += 3.0 * score
             
                 # color Histogram_result
         color_model = AI_models.ColorSimilarityModel()
-        if not os.path.exists('colorHistograms_logo_Kipris.pkl'):
-            color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.pkl')
-        histograms = color_model.load_histograms('colorHistograms_logo_Kipris.pkl')
+        if not os.path.exists('colorHistograms_logo_Kipris.joblib'):
+            color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.joblib')
+
+        histograms = color_model.load_histograms('colorHistograms_logo_Kipris.joblib')
         similarities = color_model.predict(target_image_path, histograms)
         color_scores = [accuracy for img_path, accuracy in similarities]
         color_scores = self.min_max_normalize(color_scores)
         for (image_path, _), score in zip(similarities,color_scores):
-            similar_results_dict[image_path] -= 1.0 * score    
+            try:
+                similar_results_dict[image_path] -= 1.0 * score
+
+            except KeyError:
+                pass
             
         if not os.path.exists('features_logo_Kipris.pkl'):
             similar_model = AI_models.Image_Search_Model()
@@ -71,18 +77,18 @@ class Image_Analysis:
         for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
             similar_results_dict[image_path] += 0.9 * score
         
-            # object_detection_retinanet_result
-        Object_model  = AI_models.Image_Object_Detections(len(similar_results_dict))
-        if not os.path.exists('object_logo_Kipris.pkl'):
-            Object_model.create_object_detection_pkl(root_dir,'object_logo_Kipris.pkl')
-        with open('object_logo_Kipris.pkl','rb') as f:
-            detection_dict = pickle.load(f)
-        result = Object_model.search_similar_images(target_image_path,detection_dict)
-        if len(result) != 0:
-            object_scores = [accuracy for img_path, _, accuracy in result]
-            object_scores = self.min_max_normalize(object_scores)
-            for (img_path, _, _),score in zip(result, object_scores):
-                similar_results_dict[img_path] += 0.15 * score
+        #     # object_detection_retinanet_result
+        # Object_model  = AI_models.Image_Object_Detections(len(similar_results_dict))
+        # if not os.path.exists('object_logo_Kipris.pkl'):
+        #     Object_model.create_object_detection_pkl(root_dir,'object_logo_Kipris.pkl')
+        # with open('object_logo_Kipris.pkl','rb') as f:
+        #     detection_dict = pickle.load(f)
+        # result = Object_model.search_similar_images(target_image_path,detection_dict)
+        # if len(result) != 0:
+        #     object_scores = [accuracy for img_path, _, accuracy in result]
+        #     object_scores = self.min_max_normalize(object_scores)
+        #     for (img_path, _, _),score in zip(result, object_scores):
+        #         similar_results_dict[img_path] += 0.15 * score
             
         similar_results_dict = sorted(similar_results_dict.items(), key=lambda x: x[1], reverse=True)
         if test_value is True:
@@ -150,4 +156,4 @@ class Image_Analysis:
         
 if __name__ == "__main__":
     image_analysis = Image_Analysis()
-    image_analysis.start_analysis("https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png", True)
+    image_analysis.start_analysis("https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png", True)                      
