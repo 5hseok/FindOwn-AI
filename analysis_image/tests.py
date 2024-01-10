@@ -1,21 +1,17 @@
-from django.test import TestCase, Client
+import requests
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
+from django.test import TestCase, Client
+from rest_framework import status
 
 class ImageProcessViewTest(TestCase):
     def setUp(self):
         self.client = Client()
 
     def test_image_process(self):
-        # 이미지 파일 읽기
-        with open('path_to_your_image.jpg', 'rb') as image_file:
-            image_content = image_file.read()
-
-        # SimpleUploadedFile 객체 생성
-        image = SimpleUploadedFile('test.jpg', image_content)
-
-        # POST 요청 보내기
-        response = self.client.post('/api/image_process/', {'image': image})
-
-        # 응답 확인
-        self.assertEqual(response.status_code, 200)
-        print(response.json())
+        data = {
+            'image': "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
+        }
+        response = self.client.post(reverse('ImageProcessView'), data, format='application/json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
