@@ -35,7 +35,6 @@ class ImageProcessView(View):
         analyzed_info = json.loads(analyzed_info)
         image_urls = [result['image_path'] for result in analyzed_info]
         result = get_info_from_api(image_urls)
-        print(result)
         return result
     
     def combine_info(self, analyzed_info, api_info):
