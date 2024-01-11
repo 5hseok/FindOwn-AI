@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.views import View
 import requests
 import json
@@ -12,6 +14,17 @@ from .search_Trademark_API import get_info_from_api
 import xmltodict
 
 class ImageProcessView(View):
+    def get(self, request):
+        # 이미지 URL을 받아 분석 및 Open API 요청 처리
+        image_url = request.GET.get('image')
+        if image_url is None:
+            return HttpResponseBadRequest("Image URL is required.")
+        
+        analyzed_info = self.analyze_image(image_url)
+        api_info = self.get_info_from_Kipris(analyzed_info)
+        result = self.combine_info(analyzed_info, api_info)
+        return JsonResponse(result)
+        
     def post(self, request):
         # 이미지 분석 및 Open API 요청 처리
         print(request)
@@ -26,7 +39,7 @@ class ImageProcessView(View):
     def analyze_image(self, image_path):
         # 이미지 분석 코드 작성
         image_analysis = Image_Analysis()
-        return image_analysis.start_analysis(image_path)
+        return image_analysis.start_analysis(image_path, False)
     
     def get_info_from_Kipris(self, analyzed_info):
         image_urls = [result['image_url'] for result in analyzed_info['image_path']]
