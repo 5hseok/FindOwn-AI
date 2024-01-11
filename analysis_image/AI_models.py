@@ -464,14 +464,17 @@ class CNNModel:
     def cosine_similarity(self, a, b):  # self 매개변수 추가
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-    def compare_features(self, target_image_path, all_features):
-        target_feature = self.extract_feature(target_image_path)
+    def compare_features(self, target_image_path, features_path):
+            
+            target_feature = self.extract_feature(target_image_path)
 
-        similarities = {}
-        for feature in all_features:
-            value = feature.feature  # 데이터베이스에서 가져온 feature
-            if value.ndim > 1:  # value가 1차원이 아니라면
-                value = value.flatten()  # 1차원으로 변환
-            similarities[feature.image_path] = self.cosine_similarity(target_feature, value)
-        similarities = sorted(similarities.items(),key=lambda x: x[1], reverse=True)
-        return similarities
+            with open(features_path, 'rb') as f:
+                features = pickle.load(f)
+
+            similarities = {}
+            for key, value in features.items():
+                if value.ndim > 1:  # value가 1차원이 아니라면
+                    value = value.flatten()  # 1차원으로 변환
+                similarities[key] = self.cosine_similarity(target_feature, value)
+            similarities = sorted(similarities.items(),key=lambda x: x[1], reverse=True)
+            return similarities
