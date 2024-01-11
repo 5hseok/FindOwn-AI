@@ -25,14 +25,6 @@ class Image_Analysis:
 
     def start_analysis(self, target_image_path, test_value):
         # Initialize the AI_models.
-        # url을 받아오는 걸로 변경 요망
-        ################################################################################################################
-        #Test#
-        # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\loading.png"
-        # target_image_path= "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakestar.png"
-        # target_image_path = "C:\\Users\\DGU_ICE\\FindOwn\\ImageDB\\fakecapa.png"
-
-        ################################################################################################################
         root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
         similar_results_dict = {}
             #resnet_results
