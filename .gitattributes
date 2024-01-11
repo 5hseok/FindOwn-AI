@@ -1,2 +1,4 @@
 cnn_features_Kipris.zip filter=lfs diff=lfs merge=lfs -text
+colorHistograms_logo_Kipris.zip filter=lfs diff=lfs merge=lfs -text
+features_logo_Kipris.zip filter=lfs diff=lfs merge=lfs -text
 *.ext !text !filter !merge !diff
