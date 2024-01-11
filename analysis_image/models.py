@@ -2,7 +2,7 @@ from django.db import models
 from picklefield.fields import PickledObjectField
 
 class ImageFeature_CNN(models.Model):
-    image_path = models.TextField(unique=True)  # 이미지 경로. 중복을 피하기 위해 unique=True 설정.
+    image_path = models.TextField()  # 이미지 경로. 중복을 피하기 위해 unique=True 설정.
     feature = models.JSONField()  # 이미지 특징. JSON 형태로 저장합니다.
 
     def __str__(self):
