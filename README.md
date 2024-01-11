@@ -4,7 +4,7 @@
 
 ### 키프리스 이미지 사용 o - API를 통해 상표 정보 제공
 1. requirements.txt에서 필요한 라이브러리 및 패키지 install
-2. zip 파일에서 pkl 파일을 analysis_image 폴더 내에 압축 해제 
+2. zip 파일들에서 pkl 파일들을 analysis_image 폴더 내에 압축 해제 
 3. python manage.py runserver 실행
 4. api 사용
 
@@ -16,4 +16,4 @@
 최종 점수가 0.72점 이상이라면 danger, 0.59점 이상이라면 warning, 0.59미만의 점수를 가진다면 safe로 판단하였다. 
 
 ### 비고
-color 비교, efficient_net, object로 유사 판별 등의 방법은 api 연결 아직 안했습니다. 그래도 cnn 모델은 연결시켜놔서 api 동작 가능합니다.
+색상 유사도에 영향을 많이 줄 수 있는 데이터가 colorHistograms_logo_Kipris 파일입니다. AI_main 52행부터 68행의 주석을 풀고 사용이 가능한데, 너무 요청이 돌아오는 시간이 오래 걸려서 이 모델은 넣지 않았습니다. 추후에 가능할 것 같으면 주석 풀어서 추가하는 것도 고려하면 좋을 것 같습니다.
