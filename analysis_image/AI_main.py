@@ -5,9 +5,12 @@ import os
 import matplotlib.pyplot as plt
 from PIL import Image
 import matplotlib.image as mpimg
+from django.conf import settings
 import requests
 import json
 from tqdm import tqdm
+from analysis_image.models import ImageFeature_CNN
+
 class Image_Analysis:
     def min_max_normalize(self, scores):
         min_score = min(scores)
@@ -33,49 +36,56 @@ class Image_Analysis:
         ################################################################################################################
         root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
         similar_results_dict = {}
-            #resnet_results
+        #resnet_results
         cnn = AI_models.CNNModel()
-        if not os.path.exists('cnn_features_Kipris.pkl'):
-            cnn.extract_features_from_dir(root_dir, 'cnn_features_Kipris.pkl')
-        with open('cnn_features_Kipris.pkl','rb') as f:
-            load = pickle.load(f)
-        for image_path in load:
-            similar_results_dict.update({image_path:0.0})
-            
-        cnn_similarities = cnn.compare_features(target_image_path, 'cnn_features_Kipris.pkl')
+
+        # 데이터베이스에서 모든 ImageFeature_CNN 객체를 가져옵니다.
+        all_features = ImageFeature_CNN.objects.all()
+
+        # 각 객체의 image_path와 feature를 similar_results_dict에 추가합니다.
+        for feature in all_features:
+            similar_results_dict.update({feature.image_path: 0.0})
+
+        # pkl 파일 대신 데이터베이스의 내용을 사용하여 cnn_similarities를 계산합니다.
+        # 이를 위해 compare_features 함수를 수정하여 데이터베이스에서 가져온 feature를 입력으로 받도록 해야 합니다.
+        cnn_similarities = cnn.compare_features(target_image_path, all_features)
+
         cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
         cnn_scores = self.min_max_normalize(cnn_scores)
+
         
         for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
             img_path = img_path
             similar_results_dict[img_path] += 3.0 * score
             
-                # color Histogram_result
-        color_model = AI_models.ColorSimilarityModel()
-        if not os.path.exists('colorHistograms_logo_Kipris.joblib'):
-            color_model.save_histograms(root_dir,'colorHistograms_logo_Kipris.joblib')
+        #         # color Histogram_result
+        # color_model = AI_models.ColorSimilarityModel()
+        # joblib_path =os.path.join(settings.BASE_DIR, 'analysis_image', 'colorHistograms_logo_Kipris.joblib')
+        # if not os.path.exists(joblib_path):
+        #     color_model.save_histograms(root_dir,joblib_path)
 
-        histograms = color_model.load_histograms('colorHistograms_logo_Kipris.joblib')
-        similarities = color_model.predict(target_image_path, histograms)
-        color_scores = [accuracy for img_path, accuracy in similarities]
-        color_scores = self.min_max_normalize(color_scores)
-        for (image_path, _), score in zip(similarities,color_scores):
-            try:
-                similar_results_dict[image_path] -= 1.0 * score
+        # histograms = color_model.load_histograms(joblib_path)
+        # similarities = color_model.predict(target_image_path, histograms)
+        # color_scores = [accuracy for img_path, accuracy in similarities]
+        # color_scores = self.min_max_normalize(color_scores)
+        # for (image_path, _), score in zip(similarities,color_scores):
+        #     try:
+        #         similar_results_dict[image_path] -= 1.0 * score
 
-            except KeyError:
-                pass
+        #     except KeyError:
+        #         pass
             
-        if not os.path.exists('features_logo_Kipris.pkl'):
-            similar_model = AI_models.Image_Search_Model()
-            Trademark_pkl = similar_model.extract_features(root_dir)  
-        #EfficientNet_results
-        similar_model = AI_models.Image_Search_Model(pre_extracted_features='features_logo_Kipris.pkl')
-        efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
-        efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
-        efficientnet_scores = self.min_max_normalize(efficientnet_scores)
-        for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-            similar_results_dict[image_path] += 0.9 * score
+        # pkl_path =os.path.join(settings.BASE_DIR, 'analysis_image', 'features_logo_Kiprix.pkl')
+        # if not os.path.exists(pkl_path):
+        #     similar_model = AI_models.Image_Search_Model()
+        #     Trademark_pkl = similar_model.extract_features(root_dir)  
+        # #EfficientNet_results
+        # similar_model = AI_models.Image_Search_Model(pre_extracted_features=pkl_path)
+        # efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
+        # efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
+        # efficientnet_scores = self.min_max_normalize(efficientnet_scores)
+        # for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
+        #     similar_results_dict[image_path] += 0.9 * score
         
         #     # object_detection_retinanet_result
         # Object_model  = AI_models.Image_Object_Detections(len(similar_results_dict))
