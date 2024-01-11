@@ -54,11 +54,14 @@ class Image_Analysis:
         
         for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
             img_path = img_path
-            similar_results_dict[img_path] += 3.0 * score
+            similar_results_dict[img_path] += 1.5 * score
             
         #         # color Histogram_result
         # color_model = AI_models.ColorSimilarityModel()
-        # joblib_path =os.path.join(settings.BASE_DIR, 'analysis_image', 'colorHistograms_logo_Kipris.joblib')
+        # if test_value == False:
+        #     joblib_path =os.path.join(settings.BASE_DIR, 'analysis_image', 'colorHistograms_logo_Kipris.joblib')
+        # else:
+        #     joblib_path = 'C:\\Users\\DGU_ICE\\FindOwn\\analysis_image\\colorHistograms_logo_Kipris.joblib'
         # if not os.path.exists(joblib_path):
         #     color_model.save_histograms(root_dir,joblib_path)
 
@@ -69,21 +72,24 @@ class Image_Analysis:
         # for (image_path, _), score in zip(similarities,color_scores):
         #     try:
         #         similar_results_dict[image_path] -= 1.0 * score
-
         #     except KeyError:
         #         pass
             
-        # pkl_path =os.path.join(settings.BASE_DIR, 'analysis_image', 'features_logo_Kiprix.pkl')
-        # if not os.path.exists(pkl_path):
-        #     similar_model = AI_models.Image_Search_Model()
-        #     Trademark_pkl = similar_model.extract_features(root_dir)  
-        # #EfficientNet_results
-        # similar_model = AI_models.Image_Search_Model(pre_extracted_features=pkl_path)
-        # efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
-        # efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
-        # efficientnet_scores = self.min_max_normalize(efficientnet_scores)
-        # for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-        #     similar_results_dict[image_path] += 0.9 * score
+        #efficient_net score
+        if test_value == False:
+            eff_path = os.path.join(settings.BASE_DIR, 'analysis_image', 'features_logo_Kipris.pkl')
+        else:
+            eff_path = 'C:\\Users\\DGU_ICE\\FindOwn\\analysis_image\\features_logo_Kipris.pkl'
+        if not os.path.exists(eff_path):
+            similar_model = AI_models.Image_Search_Model()
+            Trademark_pkl = similar_model.extract_features(root_dir)  
+        #EfficientNet_results
+        similar_model = AI_models.Image_Search_Model(pre_extracted_features=eff_path)
+        efficientnet_image_list = similar_model.search_similar_images(target_image_path,len(similar_results_dict))
+        efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
+        efficientnet_scores = self.min_max_normalize(efficientnet_scores)
+        for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
+            similar_results_dict[image_path] += 0.9 * score
         
         #     # object_detection_retinanet_result
         # Object_model  = AI_models.Image_Object_Detections(len(similar_results_dict))
@@ -147,7 +153,7 @@ class Image_Analysis:
                 specific_Logo = False
             if specific_Logo and accuracy > 0.7 :
                 top_results.append((img_path, "위험", accuracy))
-            elif accuracy > 0.59:
+            elif accuracy > 0.595:
                 top_results.append((img_path, "주의", accuracy))
             else:
                 top_results.append((img_path, "안전", accuracy))
