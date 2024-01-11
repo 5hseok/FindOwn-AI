@@ -10,8 +10,6 @@ class ImageProcessViewTest(TestCase):
         self.client = Client()
 
     def test_image_process(self):
-        data = {
-            'image': "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
-        }
-        response = self.client.post(reverse('ImageProcessView'), data, format='application/json')
+        image_url = "https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png"
+        response = self.client.get(reverse('ImageProcessView'), {'image': image_url})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
