@@ -9,7 +9,6 @@ from django.conf import settings
 import requests
 import json
 from tqdm import tqdm
-from analysis_image.models import ImageFeature_CNN
 
 class Image_Analysis:
     def min_max_normalize(self, scores):
@@ -36,23 +35,22 @@ class Image_Analysis:
         ################################################################################################################
         root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
         similar_results_dict = {}
-        #resnet_results
+            #resnet_results
         cnn = AI_models.CNNModel()
-
-        # 데이터베이스에서 모든 ImageFeature_CNN 객체를 가져옵니다.
-        all_features = ImageFeature_CNN.objects.all()
-
-        # 각 객체의 image_path와 feature를 similar_results_dict에 추가합니다.
-        for feature in all_features:
-            similar_results_dict.update({feature.image_path: 0.0})
-
-        # pkl 파일 대신 데이터베이스의 내용을 사용하여 cnn_similarities를 계산합니다.
-        # 이를 위해 compare_features 함수를 수정하여 데이터베이스에서 가져온 feature를 입력으로 받도록 해야 합니다.
-        cnn_similarities = cnn.compare_features(target_image_path, all_features)
-
+        if test_value == False:
+            cnn_path = os.path.join(settings.BASE_DIR, 'analysis_image', 'cnn_features_Kipris.pkl')
+        else:
+            cnn_path = 'C:\\Users\\DGU_ICE\\FindOwn\\analysis_image\\cnn_features_Kipris.pkl'
+        if not os.path.exists(cnn_path):
+            cnn.extract_features_from_dir(root_dir,cnn_path)
+        with open(cnn_path,'rb') as f:
+            load = pickle.load(f)
+        for image_path in load:
+            similar_results_dict.update({image_path:0.0})
+            
+        cnn_similarities = cnn.compare_features(target_image_path, cnn_path)
         cnn_scores = [accuracy for img_path, accuracy in cnn_similarities]
         cnn_scores = self.min_max_normalize(cnn_scores)
-
         
         for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
             img_path = img_path
@@ -147,21 +145,21 @@ class Image_Analysis:
         for img_path, accuracy in self.normalize_score(similar_results_dict[:N]):
             if "disney" in os.path.basename(img_path) or "mickey" in os.path.basename(img_path) or "monster" in os.path.basename(img_path) or "minnie" in os.path.basename(img_path):
                 specific_Logo = False
-            if specific_Logo and accuracy > 0.82 :
-                top_results.append((img_path, "danger", accuracy))
-            elif accuracy > 0.74:
-                top_results.append((img_path, "warning", accuracy))
+            if specific_Logo and accuracy > 0.7 :
+                top_results.append((img_path, "위험", accuracy))
+            elif accuracy > 0.59:
+                top_results.append((img_path, "주의", accuracy))
             else:
-                top_results.append((img_path, "safe", accuracy))
+                top_results.append((img_path, "안전", accuracy))
 
         results_list = [{"image_path": img_path, "result": result, "accuracy":accuracy} for img_path, result, accuracy in top_results]
 
         # Convert the list to JSON
         results_json = json.dumps(results_list)
-        # Show json
-        data = json.loads(results_json)
         # print data
-        print(data)
+        if test_value == True:
+            data = json.loads(results_json)
+            print(data)
         return results_json
         
 if __name__ == "__main__":
