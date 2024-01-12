@@ -9,9 +9,11 @@
 3. python manage.py runserver 실행
 4. api 사용
 
-### dir
+### Dir
 analysis_image : app dir
+
 FindOwn : 가상환경 dir
+
 findown_AI : project dir
 
 ### ~~~.pkl
