@@ -25,14 +25,15 @@ class Image_Analysis:
 
     def start_analysis(self, target_image_path, test_value):
         # Initialize the AI_models.
-        root_dir = "C:\\Users\\FindOwn\\AI_Trademark_IMG"
+        root_dir = "이미지 파일 주소"   #Kipris에서 가져온 이미지 파일들을 담은 root 폴더 주소
+        #pkl 파일이 있다면 설정하지 않아도 된다.
         similar_results_dict = {}
             #resnet_results
         cnn = AI_models.CNNModel()
         if test_value == False:
             cnn_path = os.path.join(settings.BASE_DIR, 'analysis_image', 'cnn_features_Kipris.pkl')
         else:
-            cnn_path = 'C:\\Users\\DGU_ICE\\FindOwn\\analysis_image\\cnn_features_Kipris.pkl'
+            cnn_path = os.path.join(os.getcwd(), 'analysis_image', 'cnn_features_Kipris.pkl')
         if not os.path.exists(cnn_path):
             cnn.extract_features_from_dir(root_dir,cnn_path)
         with open(cnn_path,'rb') as f:
@@ -71,7 +72,7 @@ class Image_Analysis:
         if test_value == False:
             eff_path = os.path.join(settings.BASE_DIR, 'analysis_image', 'features_logo_Kipris.pkl')
         else:
-            eff_path = 'C:\\Users\\DGU_ICE\\FindOwn\\analysis_image\\features_logo_Kipris.pkl'
+            eff_path = os.path.join(os.getcwd(), 'analysis_image', 'features_logo_Kipris.pkl')
         if not os.path.exists(eff_path):
             similar_model = AI_models.Image_Search_Model()
             Trademark_pkl = similar_model.extract_features(root_dir)  
@@ -162,4 +163,4 @@ class Image_Analysis:
         
 if __name__ == "__main__":
     image_analysis = Image_Analysis()
-    image_analysis.start_analysis("https://trademark.help-me.kr/images/blog/trademark-registration-all-inclusive/image-05.png", True)                      
+    image_analysis.start_analysis("https://upload.wikimedia.org/wikipedia/commons/e/e4/Meta_Inc._logo.jpg", True)                      
