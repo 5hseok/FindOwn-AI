@@ -384,15 +384,6 @@ class ColorSimilarityModel:
     def compare_histograms(self, hist1, hist2):
         return self.calculate_histogram_cross_entropy(hist1, hist2)
 
-    # def predict(self, target_image_path, histograms):
-    #     target_hist = self.calculate_histogram(target_image_path)
-    #     similarities = []
-
-    #     for filename, hist in histograms.items():
-    #         similarity = self.compare_histograms(target_hist, hist)
-    #         similarities.append((filename, similarity))
-    #     sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=False)
-    #     return sorted_similarities
     def _calculate_similarity(self, target_hist, img_info):
         filename, hist = img_info
         similarity = self.calculate_histogram_cross_entropy(target_hist, hist)
