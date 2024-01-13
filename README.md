@@ -9,6 +9,13 @@
 3. python manage.py runserver 실행
 4. api 사용
 
+### Dir
+analysis_image : app dir
+
+FindOwn : 가상환경 dir
+
+findown_AI : project dir
+
 ### ~~~.pkl
 
 이미지 로고 파일의 모델별 특징 추출 파일. 키프리스에 존재하는 상표들 이미지 데이터를 모아놓은 파일을 root_dir로 지정해서 pkl로 생성이 가능하다. 현재는 구동을 위해 cnn_features_Kipris.pkl 파일만 사용한다.
