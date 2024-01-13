@@ -1,0 +1,5 @@
+outs:
+- md5: 45eceb07885a26a17a2b2a68e6e4624d
+  size: 998934699
+  hash: md5
+  path: effi_data.tar.gz

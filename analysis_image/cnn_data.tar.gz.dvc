@@ -1,0 +1,5 @@
+outs:
+- md5: 054cd80886728afa47c42efc787ef968
+  size: 1552854719
+  hash: md5
+  path: cnn_data.tar.gz
