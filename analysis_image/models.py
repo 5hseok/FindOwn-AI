@@ -1,5 +1,4 @@
 from django.db import models
-from picklefield.fields import PickledObjectField
 
 class ImageFeature_CNN(models.Model):
     image_path = models.TextField()  # 이미지 경로. 중복을 피하기 위해 unique=True 설정.
