@@ -5,7 +5,8 @@
 ### 키프리스 API를 통해 상표 정보 제공
 
 1. requirements.txt에서 필요한 라이브러리 및 패키지 install
-2. zip 파일들에서 pkl 파일들을 analysis_image 폴더 내에 압축 해제
+2. git pull 후 dvc pull -> 데이터가 불러와짐.
+2-1. 불러와진 tar.gz 파일을 압축해제하여 analysis_image dir 안에 넣기
 3. python manage.py runserver 실행
 4. api 사용
 
