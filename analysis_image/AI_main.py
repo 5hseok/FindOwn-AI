@@ -19,7 +19,7 @@ class Image_Analysis:
         return [(score - min_score) / (max_score - min_score) for score in scores]
 
     def normalize_score(self, scores_list):
-        max = 5.0
+        max = 2.4
         scores_list = [(img_path,score / max) for (img_path,score) in scores_list]
         return scores_list
 
@@ -47,7 +47,7 @@ class Image_Analysis:
         
         for (img_path, _ ), score in zip(cnn_similarities,cnn_scores):
             img_path = img_path
-            similar_results_dict[img_path] += 1.5 * score
+            similar_results_dict[img_path] += 1.9 * score
             
         #         # color Histogram_result
         # color_model = AI_models.ColorSimilarityModel()
@@ -82,7 +82,7 @@ class Image_Analysis:
         efficientnet_scores = [accuracy for img_path, accuracy in efficientnet_image_list]
         efficientnet_scores = self.min_max_normalize(efficientnet_scores)
         for (image_path, _), score in zip(efficientnet_image_list,efficientnet_scores):
-            similar_results_dict[image_path] += 0.9 * score
+            similar_results_dict[image_path] += 0.5 * score
         
         #     # object_detection_retinanet_result
         # Object_model  = AI_models.Image_Object_Detections(len(similar_results_dict))
@@ -144,9 +144,9 @@ class Image_Analysis:
         for img_path, accuracy in self.normalize_score(similar_results_dict[:N]):
             if "disney" in os.path.basename(img_path) or "mickey" in os.path.basename(img_path) or "monster" in os.path.basename(img_path) or "minnie" in os.path.basename(img_path):
                 specific_Logo = False
-            if specific_Logo and accuracy > 0.7 :
+            if specific_Logo and accuracy > 0.85 :
                 top_results.append((img_path, "위험", accuracy))
-            elif accuracy > 0.595:
+            elif accuracy > 0.75:
                 top_results.append((img_path, "주의", accuracy))
             else:
                 top_results.append((img_path, "안전", accuracy))
